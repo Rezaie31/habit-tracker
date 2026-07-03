@@ -6,7 +6,6 @@
     <title>Daily Progress</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
@@ -21,6 +20,8 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: none;
             overflow-x: hidden;
+            background: var(--bg);
+            color: var(--text);
         }
         .container {
             max-width: 1100px;
@@ -163,10 +164,6 @@
         }
 
         /* ===== APPLY THEME ===== */
-        body {
-            background: var(--bg);
-            color: var(--text);
-        }
         nav {
             background: var(--nav-bg);
             border-color: var(--border);
@@ -898,7 +895,7 @@
         });
 
         // ==============================================
-        //  ترجمه‌ها
+        //  LANGUAGE TRANSLATIONS
         // ==============================================
         const translations = {
             en: {
@@ -988,7 +985,7 @@
         let currentLang = 'en';
 
         // ==============================================
-        //  LANGUAGE
+        //  LANGUAGE FUNCTION
         // ==============================================
         function toggleLang() {
             if (currentLang === 'en') {
@@ -1015,7 +1012,7 @@
         }
 
         // ==============================================
-        //  داده‌ها و وضعیت
+        //  APP LOGIC
         // ==============================================
         const PRESET_ACTIVITIES = [
             { id: 'sport', icon: '🏋️', name: 'ورزش' },
@@ -1032,9 +1029,6 @@
         let isAdmin = false;
         let editingIndex = null;
 
-        // ==============================================
-        //  کاربران (localStorage)
-        // ==============================================
         function getUsers() {
             return JSON.parse(localStorage.getItem('dailyUsers') || '{}');
         }
@@ -1043,9 +1037,6 @@
             localStorage.setItem('dailyUsers', JSON.stringify(users));
         }
 
-        // ==============================================
-        //  نمایش/مخفی‌سازی بخش‌ها
-        // ==============================================
         function showLogin() {
             document.getElementById('authBox').classList.remove('hidden');
             document.querySelector('.hero').style.display = 'none';
@@ -1064,9 +1055,6 @@
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
-        // ==============================================
-        //  احراز هویت
-        // ==============================================
         function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
@@ -1158,9 +1146,6 @@
             }
         }
 
-        // ==============================================
-        //  پنل مدیریت
-        // ==============================================
         function showAdminLogin() {
             document.getElementById('authBox').classList.add('hidden');
             document.getElementById('adminLoginBox').classList.remove('hidden');
@@ -1225,9 +1210,6 @@
             container.innerHTML = html;
         }
 
-        // ==============================================
-        //  عملیات روی فعالیت‌ها
-        // ==============================================
         function deleteActivity(index) {
             if (confirm(currentLang === 'en' ? 'Are you sure you want to delete this activity?' :
                     'آیا از حذف این فعالیت مطمئن هستید?')) {
@@ -1269,9 +1251,6 @@
             renderApp();
         }
 
-        // ==============================================
-        //  رندر برنامه و نمودارها
-        // ==============================================
         function renderApp() {
             const today = new Date().toLocaleDateString(currentLang === 'en' ? 'en-US' : 'fa-IR');
             document.getElementById('currentDate').textContent = today;
@@ -1373,9 +1352,6 @@
             });
         }
 
-        // ==============================================
-        //  شروع
-        // ==============================================
         translatePage();
         renderApp();
     </script>
