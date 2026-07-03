@@ -19,7 +19,6 @@
             font-family: 'Vazirmatn', 'Inter', sans-serif;
             min-height: 100vh;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            /* cursor: none;  ← حذف شد تا فلش موس دیده بشه */
             overflow-x: hidden;
             background: var(--bg);
             color: var(--text);
@@ -713,7 +712,7 @@
                 <div class="theme-dot dark-pastel" onclick="setTheme('dark-pastel')" title="Dark Pastel"></div>
             </div>
             <button class="lang-btn" onclick="toggleLang()" id="langToggle">🇮🇷 FA</button>
-            <button class="btn btn-primary" onclick="showLogin()" data-key="login_btn">Login / Register</button>
+            <button class="btn btn-primary" onclick="showLogin()" data-key="login_btn" id="loginNavBtn">Login / Register</button>
         </div>
     </nav>
 
@@ -832,6 +831,11 @@
 
     <script>
         // ==============================================
+        //  GOOGLE SHEETS CONFIG
+        // ==============================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXCve29A1wIfLzWiJwhHcTMsk55KiYIKIAZgiGisgQVgiBnyfOoonDLgZ-HOKV_GYP/exec";
+
+        // ==============================================
         //  THEME SYSTEM
         // ==============================================
         function setTheme(theme) {
@@ -871,7 +875,7 @@
         setTheme(savedTheme);
 
         // ==============================================
-        //  CURSOR GLOW (با فلش موس)
+        //  CURSOR GLOW
         // ==============================================
         const glow = document.getElementById('glow');
         let glowTimeout;
@@ -1010,7 +1014,7 @@
         }
 
         // ==============================================
-        //  APP LOGIC (همان کد قبلی)
+        //  APP LOGIC (با Google Sheets)
         // ==============================================
         const PRESET_ACTIVITIES = [
             { id: 'sport', icon: '🏋️', name: 'ورزش' },
@@ -1027,33 +1031,39 @@
         let isAdmin = false;
         let editingIndex = null;
 
-        function getUsers() {
-            return JSON.parse(localStorage.getItem('dailyUsers') || '{}');
+        // ==============================================
+        //  Google Sheets Functions
+        // ==============================================
+        async function syncWithSheet(action, data) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...data })
+                });
+                return { success: true };
+            } catch (e) {
+                console.error('❌ Error syncing with Google Sheets:', e);
+                return { success: false, error: e.message };
+            }
         }
 
-        function saveUsers(users) {
-            localStorage.setItem('dailyUsers', JSON.stringify(users));
+        async function loadFromSheet() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const result = await response.json();
+                return result.users || {};
+            } catch (e) {
+                console.error('❌ Error loading from Google Sheets:', e);
+                return {};
+            }
         }
 
-        function showLogin() {
-            document.getElementById('authBox').classList.remove('hidden');
-            document.querySelector('.hero').style.display = 'none';
-        }
-
-        function hideLogin() {
-            document.getElementById('authBox').classList.add('hidden');
-            document.querySelector('.hero').style.display = 'block';
-        }
-
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-
-        function login() {
+        // ==============================================
+        //  AUTH FUNCTIONS (با Google Sheets)
+        // ==============================================
+        async function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             const msg = document.getElementById('loginMessage');
@@ -1064,8 +1074,8 @@
                 return;
             }
             showLoading();
+            const users = await loadFromSheet();
             setTimeout(() => {
-                const users = getUsers();
                 if (users[username] && users[username].password === password) {
                     currentUser = username;
                     activities = users[username].activities || PRESET_ACTIVITIES.map(a => ({ ...a }));
@@ -1074,6 +1084,8 @@
                     document.querySelector('.hero').style.display = 'none';
                     document.getElementById('appBox').classList.remove('hidden');
                     document.getElementById('displayUser').textContent = username;
+                    // حذف دکمه ورود/ثبت‌نام از نوار
+                    document.getElementById('loginNavBtn').classList.add('hidden');
                     msg.textContent = '';
                     renderApp();
                 } else {
@@ -1084,7 +1096,7 @@
             }, 800);
         }
 
-        function register() {
+        async function register() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             const msg = document.getElementById('loginMessage');
@@ -1100,50 +1112,50 @@
                 return;
             }
             showLoading();
-            setTimeout(() => {
-                const users = getUsers();
-                if (users[username]) {
-                    msg.textContent = currentLang === 'en' ? 'This username already exists.' :
-                        'این نام کاربری قبلاً ثبت شده است.';
-                    hideLoading();
-                    return;
-                }
-                users[username] = {
-                    password,
-                    activities: PRESET_ACTIVITIES.map(a => ({ ...a })),
-                    dailyCounts: {}
-                };
-                saveUsers(users);
+            const users = await loadFromSheet();
+            if (users[username]) {
+                msg.textContent = currentLang === 'en' ? 'This username already exists.' :
+                    'این نام کاربری قبلاً ثبت شده است.';
+                hideLoading();
+                return;
+            }
+            const result = await syncWithSheet('register', { username, password, activities: PRESET_ACTIVITIES.map(a => ({ ...a })), dailyCounts: {} });
+            if (result.success) {
                 msg.textContent = currentLang === 'en' ? '✅ Registration successful! Now login.' :
                     '✅ ثبت‌نام موفق! حالا وارد شوید.';
                 msg.style.color = '#34d399';
                 setTimeout(() => { msg.style.color = '#fb7185'; }, 3000);
-                hideLoading();
-            }, 800);
+            } else {
+                msg.textContent = currentLang === 'en' ? '❌ Registration failed. Try again.' :
+                    '❌ ثبت‌نام ناموفق. دوباره تلاش کن.';
+            }
+            hideLoading();
         }
 
-        function logout() {
-            saveUserData();
+        async function logout() {
+            if (currentUser) {
+                await syncWithSheet('update', {
+                    username: currentUser,
+                    password: 'dummy',
+                    activities: activities,
+                    dailyCounts: dailyCounts,
+                    lastActivity: new Date().toLocaleString('fa-IR')
+                });
+            }
             currentUser = null;
             activities = [];
             dailyCounts = {};
             document.getElementById('appBox').classList.add('hidden');
             document.getElementById('adminPanel').classList.add('hidden');
             document.querySelector('.hero').style.display = 'block';
+            document.getElementById('loginNavBtn').classList.remove('hidden');
             isAdmin = false;
+            renderApp();
         }
 
-        function saveUserData() {
-            if (!currentUser) return;
-            const users = getUsers();
-            if (users[currentUser]) {
-                users[currentUser].activities = activities;
-                users[currentUser].dailyCounts = dailyCounts;
-                users[currentUser].lastActivity = new Date().toLocaleString('fa-IR');
-                saveUsers(users);
-            }
-        }
-
+        // ==============================================
+        //  ADMIN FUNCTIONS
+        // ==============================================
         function showAdminLogin() {
             document.getElementById('authBox').classList.add('hidden');
             document.getElementById('adminLoginBox').classList.remove('hidden');
@@ -1156,7 +1168,7 @@
             isAdmin = false;
         }
 
-        function adminLogin() {
+        async function adminLogin() {
             const password = document.getElementById('adminPassword').value;
             const msg = document.getElementById('adminLoginMessage');
             if (password === '0101') {
@@ -1167,52 +1179,70 @@
                 document.querySelector('.hero').style.display = 'none';
                 document.getElementById('adminPanel').classList.remove('hidden');
                 msg.textContent = '';
-                renderAdminPanel();
+                await renderAdminPanel();
             } else {
                 msg.textContent = currentLang === 'en' ? '❌ Admin password is incorrect.' :
                     '❌ رمز مدیریت اشتباه است.';
             }
         }
 
-        function renderAdminPanel() {
+        async function renderAdminPanel() {
             const container = document.getElementById('adminTableContainer');
-            const users = getUsers();
+            const users = await loadFromSheet();
             const usernames = Object.keys(users);
+
             if (usernames.length === 0) {
-                container.innerHTML =
-                    `<p style="color:var(--text-muted);">${currentLang === 'en' ? 'No users registered.' : 'هیچ کاربری ثبت نشده است.'}</p>`;
+                container.innerHTML = `<p style="color:var(--text-muted);">${currentLang === 'en' ? 'No users registered.' : 'هیچ کاربری ثبت نشده است.'}</p>`;
                 return;
             }
+
             let html = `
                 <table>
-                    <thead><tr>
-                        <th>#</th>
-                        <th>${currentLang === 'en' ? 'User' : 'کاربر'}</th>
-                        <th>${currentLang === 'en' ? 'Activities' : 'فعالیت‌ها'}</th>
-                        <th>${currentLang === 'en' ? 'Last Activity' : 'آخرین فعالیت'}</th>
-                    </tr></thead><tbody>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>${currentLang === 'en' ? 'User' : 'کاربر'}</th>
+                            <th>${currentLang === 'en' ? 'Activities' : 'فعالیت‌ها'}</th>
+                            <th>${currentLang === 'en' ? 'Today\'s Progress' : 'پیشرفت امروز'}</th>
+                            <th>${currentLang === 'en' ? 'Last Activity' : 'آخرین فعالیت'}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
+
             usernames.forEach((user, i) => {
-                const acts = users[user].activities || [];
-                const last = users[user].lastActivity || 'نامشخص';
-                html += `<tr>
-                    <td>${i+1}</td>
-                    <td>${user}</td>
-                    <td>${acts.length}</td>
-                    <td>${last}</td>
-                </tr>`;
+                const userData = users[user];
+                const acts = userData.activities || [];
+                const dailyCounts = userData.dailyCounts || {};
+                const todayKey = new Date().toISOString().split('T')[0];
+                const todayData = dailyCounts[todayKey] || {};
+                const todayProgress = acts.map(a => `${a.name}: ${todayData[a.id] || 0}`).join(', ');
+                const lastActivity = userData.lastActivity || 'نامشخص';
+                html += `
+                    <tr>
+                        <td>${i+1}</td>
+                        <td>${user}</td>
+                        <td>${acts.map(a => a.name).join(', ')}</td>
+                        <td>${todayProgress || '—'}</td>
+                        <td>${lastActivity}</td>
+                    </tr>
+                `;
             });
+
             html += `</tbody></table>
                 <p style="color:var(--text-muted);margin-top:12px;">${currentLang === 'en' ? '📊 Total users:' : '📊 تعداد کل کاربران:'} ${usernames.length}</p>
             `;
             container.innerHTML = html;
         }
 
-        function deleteActivity(index) {
+        // ==============================================
+        //  ACTIVITIES FUNCTIONS
+        // ==============================================
+        async function deleteActivity(index) {
             if (confirm(currentLang === 'en' ? 'Are you sure you want to delete this activity?' :
                     'آیا از حذف این فعالیت مطمئن هستید?')) {
                 activities.splice(index, 1);
-                saveUserData();
+                await saveUserData();
                 renderApp();
             }
         }
@@ -1234,7 +1264,7 @@
             editingIndex = null;
         }
 
-        function addCustomActivity() {
+        async function addCustomActivity() {
             const input = document.getElementById('customActivityInput');
             const name = input.value.trim();
             if (!name) return;
@@ -1244,11 +1274,25 @@
                 name: name
             };
             activities.push(newAct);
-            saveUserData();
+            await saveUserData();
             input.value = '';
             renderApp();
         }
 
+        async function saveUserData() {
+            if (!currentUser) return;
+            await syncWithSheet('update', {
+                username: currentUser,
+                password: 'dummy',
+                activities: activities,
+                dailyCounts: dailyCounts,
+                lastActivity: new Date().toLocaleString('fa-IR')
+            });
+        }
+
+        // ==============================================
+        //  RENDER APP
+        // ==============================================
         function renderApp() {
             const today = new Date().toLocaleDateString(currentLang === 'en' ? 'en-US' : 'fa-IR');
             document.getElementById('currentDate').textContent = today;
@@ -1283,8 +1327,8 @@
             updateCharts();
         }
 
-        function saveDaily() {
-            saveUserData();
+        async function saveDaily() {
+            await saveUserData();
             alert(currentLang === 'en' ? '✅ Today\'s activities saved!' : '✅ فعالیت‌های امروز ذخیره شد!');
         }
 
@@ -1350,6 +1394,9 @@
             });
         }
 
+        // ==============================================
+        //  START
+        // ==============================================
         translatePage();
         renderApp();
     </script>
