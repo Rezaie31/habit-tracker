@@ -1,223 +1,638 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Habit Tracker</title>
+    <title>Daily Progress</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* ===== RESET & VARIABLES ===== */
+        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        :root {
-            --bg: #f1f5f9;
-            --card: #ffffff;
-            --text: #0f172a;
-            --muted: #64748b;
-            --accent: #6366f1;
-            --accent2: #22d3ee;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            --radius: 16px;
-            --transition: 0.3s ease;
-        }
-        body.dark {
-            --bg: #0a0f1f;
-            --card: #111a2e;
-            --text: #e5e7eb;
-            --muted: #94a3b8;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        html {
+            scroll-behavior: smooth;
         }
         body {
             font-family: 'Vazirmatn', 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            transition: var(--transition);
-            padding: 20px;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: none;
+            overflow-x: hidden;
         }
         .container {
-            max-width: 900px;
-            width: 100%;
-            background: var(--card);
-            padding: 28px 24px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            transition: var(--transition);
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
         }
         .hidden {
             display: none !important;
         }
-        /* ===== HEADER ===== */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 24px;
+
+        /* ===== CURSOR GLOW ===== */
+        #glow {
+            position: fixed;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            pointer-events: none;
+            background: radial-gradient(circle, rgba(244, 114, 182, 0.25) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            mix-blend-mode: screen;
+            filter: blur(50px);
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
+        @media (max-width: 768px) {
+            #glow {
+                display: none;
+            }
+            body {
+                cursor: auto;
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--primary-light);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        /* ===== THEMES (PASTEL) ===== */
+        .theme-pink {
+            --primary: #f472b6;
+            --primary-light: #fbcfe8;
+            --primary-dark: #ec4899;
+            --primary-gradient: linear-gradient(135deg, #f472b6, #8b5cf6);
+            --bg: #fdf2f8;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text: #1e1b4b;
+            --text-muted: #6b5b7b;
+            --border: #fbcfe8;
+            --shadow: rgba(244, 114, 182, 0.3);
+            --nav-bg: rgba(253, 242, 248, 0.8);
+        }
+        .theme-blue {
+            --primary: #60a5fa;
+            --primary-light: #bfdbfe;
+            --primary-dark: #3b82f6;
+            --primary-gradient: linear-gradient(135deg, #60a5fa, #8b5cf6);
+            --bg: #eff6ff;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text: #1e293b;
+            --text-muted: #475569;
+            --border: #bfdbfe;
+            --shadow: rgba(96, 165, 250, 0.3);
+            --nav-bg: rgba(239, 246, 255, 0.8);
+        }
+        .theme-green {
+            --primary: #34d399;
+            --primary-light: #a7f3d0;
+            --primary-dark: #10b981;
+            --primary-gradient: linear-gradient(135deg, #34d399, #6ee7b7);
+            --bg: #ecfdf5;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text: #064e3b;
+            --text-muted: #047857;
+            --border: #a7f3d0;
+            --shadow: rgba(52, 211, 153, 0.3);
+            --nav-bg: rgba(236, 253, 245, 0.8);
+        }
+        .theme-purple {
+            --primary: #a78bfa;
+            --primary-light: #ddd6fe;
+            --primary-dark: #8b5cf6;
+            --primary-gradient: linear-gradient(135deg, #a78bfa, #8b5cf6);
+            --bg: #f5f3ff;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text: #2e1065;
+            --text-muted: #5b21b6;
+            --border: #ddd6fe;
+            --shadow: rgba(167, 139, 250, 0.3);
+            --nav-bg: rgba(245, 243, 255, 0.8);
+        }
+        .theme-yellow {
+            --primary: #fcd34d;
+            --primary-light: #fde68a;
+            --primary-dark: #f59e0b;
+            --primary-gradient: linear-gradient(135deg, #fcd34d, #fbbf24);
+            --bg: #fffbeb;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text: #78350f;
+            --text-muted: #92400e;
+            --border: #fde68a;
+            --shadow: rgba(252, 211, 77, 0.3);
+            --nav-bg: rgba(255, 251, 235, 0.8);
+        }
+        .theme-white {
+            --primary: #94a3b8;
+            --primary-light: #e2e8f0;
+            --primary-dark: #64748b;
+            --primary-gradient: linear-gradient(135deg, #cbd5e1, #94a3b8);
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text: #0f172a;
+            --text-muted: #475569;
+            --border: #e2e8f0;
+            --shadow: rgba(148, 163, 184, 0.2);
+            --nav-bg: rgba(248, 250, 252, 0.85);
+        }
+        .theme-dark-pastel {
+            --primary: #818cf8;
+            --primary-light: #a5b4fc;
+            --primary-dark: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #818cf8, #a78bfa);
+            --bg: #0f0a1a;
+            --card-bg: rgba(30, 27, 75, 0.7);
+            --text: #e5e7eb;
+            --text-muted: #9ca3af;
+            --border: #4c1d95;
+            --shadow: rgba(129, 140, 248, 0.2);
+            --nav-bg: rgba(15, 10, 26, 0.8);
+        }
+
+        /* ===== APPLY THEME ===== */
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+        nav {
+            background: var(--nav-bg);
+            border-color: var(--border);
+        }
+        .logo {
+            background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .user-info {
+        .btn-primary {
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 8px 30px var(--shadow);
+        }
+        .btn-outline {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .lang-btn {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .lang-btn:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .auth-box {
+            background: var(--card-bg);
+            border-color: var(--border);
+        }
+        .auth-box input {
+            border-color: var(--border);
+            background: var(--card-bg);
+        }
+        .activity-card {
+            background: var(--card-bg);
+            border-color: var(--border);
+        }
+        .activity-card:hover {
+            border-color: var(--primary);
+        }
+        .activity-card.done {
+            border-color: #34d399;
+            background: rgba(52, 211, 153, 0.1);
+        }
+        .chart-box {
+            background: var(--card-bg);
+            border-color: var(--border);
+        }
+        #adminPanel {
+            background: var(--card-bg);
+            border-color: var(--border);
+        }
+        #adminPanel th {
+            background: var(--primary);
+            color: #fff;
+        }
+        .features-section {
+            border-color: var(--border);
+        }
+        .feature-item {
+            background: var(--card-bg);
+            border-color: var(--border);
+        }
+        .feature-item:hover {
+            border-color: var(--primary);
+        }
+        .add-activity input {
+            border-color: var(--border);
+            background: var(--card-bg);
+        }
+        .hero h1 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            color: var(--text-muted);
+        }
+        .app-header {
+            border-color: var(--border);
+        }
+
+        /* ===== NAV ===== */
+        nav {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            color: var(--muted);
-            font-size: 14px;
+            padding: 16px 0;
             flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            transition: all 0.4s;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            color: inherit;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s;
+            padding: 6px 12px;
+            border-radius: 40px;
+        }
+        .nav-links a:hover {
+            background: var(--primary-light);
+            color: var(--text);
         }
         .btn {
             border: none;
-            padding: 8px 16px;
-            border-radius: 30px;
+            padding: 10px 22px;
+            border-radius: 40px;
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition);
-            font-size: 13px;
-            background: var(--accent);
-            color: #fff;
-        }
-        .btn:hover {
-            transform: scale(1.04);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--accent);
-            color: var(--accent);
-        }
-        .btn-danger {
-            background: #ef4444;
-        }
-        .btn-danger:hover {
-            background: #dc2626;
+            transition: all 0.3s ease;
+            font-size: 14px;
         }
         .btn-success {
-            background: #22c55e;
+            background: #34d399;
+            color: #fff;
         }
         .btn-success:hover {
-            background: #16a34a;
+            background: #10b981;
         }
-        /* ===== LOGIN ===== */
-        #loginBox {
+        .btn-danger {
+            background: #fb7185;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #f43f5e;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+
+        /* ===== THEME SELECTOR ===== */
+        .theme-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 4px 8px;
+            border-radius: 40px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+        }
+        .theme-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .theme-dot:hover {
+            transform: scale(1.15);
+        }
+        .theme-dot.active {
+            border-color: var(--text);
+            transform: scale(1.1);
+            box-shadow: 0 0 12px var(--shadow);
+        }
+        .theme-dot.pink {
+            background: #f472b6;
+        }
+        .theme-dot.blue {
+            background: #60a5fa;
+        }
+        .theme-dot.green {
+            background: #34d399;
+        }
+        .theme-dot.purple {
+            background: #a78bfa;
+        }
+        .theme-dot.yellow {
+            background: #fcd34d;
+        }
+        .theme-dot.white {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+        .theme-dot.dark-pastel {
+            background: #4c1d95;
+            border-color: #818cf8;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
             text-align: center;
-            padding: 40px 20px;
+            padding: 80px 20px 60px;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        #loginBox h2 {
-            margin-bottom: 20px;
-            color: var(--accent);
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            -webkit-text-fill-color: transparent;
         }
-        #loginBox input {
-            width: 100%;
-            max-width: 300px;
-            padding: 12px;
-            border-radius: 30px;
-            border: 2px solid var(--muted);
-            background: var(--bg);
+        .hero p {
+            font-size: 20px;
+            max-width: 650px;
+            margin: 0 auto 24px;
+            line-height: 1.9;
+        }
+        .hero .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        /* ===== FEATURES ===== */
+        .features-section {
+            padding: 60px 0;
+            border-top: 2px solid var(--border);
+            border-bottom: 2px solid var(--border);
+            margin: 20px 0;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+        .feature-item {
+            padding: 24px 20px;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            text-align: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(6px);
+        }
+        .feature-item:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+        }
+        .feature-item .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .feature-item h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
             color: var(--text);
+        }
+        .feature-item p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ===== AUTH ===== */
+        .auth-box {
+            max-width: 400px;
+            margin: 40px auto;
+            backdrop-filter: blur(10px);
+            padding: 32px;
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            border: 2px solid var(--border);
+        }
+        .auth-box h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+        .auth-box input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            border: 2px solid var(--border);
             margin-bottom: 12px;
             font-size: 16px;
             text-align: center;
+            color: var(--text);
         }
-        #loginBox .btn {
-            padding: 12px 32px;
-            font-size: 16px;
+        .auth-box input:focus {
+            outline: none;
+            border-color: var(--primary);
         }
-        /* ===== HABITS ===== */
-        .form-row {
+        .auth-box .btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        /* ===== LOADING ===== */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
             display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .loading-text {
+            margin-top: 16px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* ===== APP ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 12px;
             margin-bottom: 24px;
-            flex-wrap: wrap;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
         }
-        .form-row input {
-            flex: 1;
-            padding: 10px 14px;
-            border-radius: 30px;
-            border: 2px solid var(--muted);
-            background: var(--bg);
+        .app-header h2 {
+            font-size: 24px;
             color: var(--text);
-            outline: none;
-            transition: var(--transition);
-            font-size: 14px;
-            min-width: 150px;
         }
-        .form-row input:focus {
-            border-color: var(--accent);
-        }
-        .habit-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg);
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            transition: var(--transition);
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .habit-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        .habit-info {
+        .user-badge {
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-        .habit-name {
-            font-weight: 600;
-            font-size: 16px;
-        }
-        .habit-stats {
-            font-size: 13px;
-            color: var(--muted);
-        }
-        .habit-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
             flex-wrap: wrap;
         }
-        .habit-check {
-            width: 22px;
-            height: 22px;
+        .activities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .activity-card {
+            padding: 18px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            text-align: center;
+            transition: all 0.3s;
             cursor: pointer;
-            accent-color: var(--accent);
+            position: relative;
+            backdrop-filter: blur(6px);
         }
-        /* ===== CHART ===== */
-        .chart-container {
-            margin-top: 28px;
-            padding: 16px;
-            background: var(--bg);
-            border-radius: var(--radius);
+        .activity-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
         }
-        .chart-container h3 {
+        .activity-card.done {
+            border-color: #34d399;
+            background: rgba(52, 211, 153, 0.1);
+        }
+        .activity-card .icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .activity-card .act-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .activity-card .act-count {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .activity-card .act-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        .activity-card .act-actions .btn {
+            padding: 2px 10px;
+            font-size: 10px;
+            border-radius: 30px;
+        }
+        .add-activity {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .add-activity input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 40px;
+            border: 2px solid var(--border);
+            background: var(--card-bg);
+            min-width: 150px;
+            color: var(--text);
+        }
+        .add-activity input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* ===== CHARTS ===== */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 30px;
+        }
+        .chart-box {
+            padding: 18px;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            backdrop-filter: blur(6px);
+        }
+        .chart-box h3 {
+            text-align: center;
             margin-bottom: 12px;
-            font-size: 18px;
+            color: var(--text-muted);
         }
         canvas {
-            max-height: 200px;
+            max-height: 180px;
             width: 100% !important;
         }
-        /* ===== ADMIN PANEL ===== */
+
+        /* ===== ADMIN ===== */
         #adminPanel {
-            margin-top: 24px;
-            padding: 16px;
-            background: var(--bg);
-            border-radius: var(--radius);
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            backdrop-filter: blur(6px);
         }
         #adminPanel table {
             width: 100%;
@@ -227,562 +642,367 @@
         #adminPanel th,
         #adminPanel td {
             padding: 8px 12px;
-            border-bottom: 1px solid var(--muted);
+            border-bottom: 1px solid var(--border);
             text-align: center;
+            color: var(--text);
         }
         #adminPanel th {
-            background: var(--accent);
             color: #fff;
         }
+
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
-            .container {
-                padding: 16px;
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
             }
-            .habit-item {
+            .hero p {
+                font-size: 16px;
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+            .activities-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+            nav {
                 flex-direction: column;
                 align-items: stretch;
+                text-align: center;
             }
-            .habit-actions {
-                justify-content: flex-start;
+            .nav-links {
+                justify-content: center;
             }
-            .form-row {
-                flex-direction: column;
+            .theme-selector {
+                justify-content: center;
             }
-            .form-row input {
-                width: 100%;
+        }
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 26px;
             }
-            #adminPanel table {
-                font-size: 11px;
+            .container {
+                padding: 12px;
             }
-            #adminPanel th,
-            #adminPanel td {
-                padding: 4px 6px;
+            .theme-dot {
+                width: 22px;
+                height: 22px;
             }
         }
     </style>
 </head>
-<body>
+<body class="theme-pink">
 
+    <!-- ===== CURSOR GLOW ===== -->
+    <div id="glow"></div>
+
+    <!-- ===== LOADING OVERLAY ===== -->
+    <div id="loadingOverlay" class="hidden">
+        <div class="spinner"></div>
+        <div class="loading-text" data-key="loading">⏳ Please wait...</div>
+    </div>
+
+    <!-- ===== NAV ===== -->
+    <nav>
+        <div class="logo" data-key="logo">✨ Daily Progress</div>
+        <div class="nav-links">
+            <a href="#home" data-key="nav_home">Home</a>
+            <a href="#features" data-key="nav_features">Features</a>
+            <a href="#about" data-key="nav_about">About</a>
+            <div class="theme-selector">
+                <div class="theme-dot pink active" onclick="setTheme('pink')" title="Pink"></div>
+                <div class="theme-dot blue" onclick="setTheme('blue')" title="Blue"></div>
+                <div class="theme-dot green" onclick="setTheme('green')" title="Green"></div>
+                <div class="theme-dot purple" onclick="setTheme('purple')" title="Purple"></div>
+                <div class="theme-dot yellow" onclick="setTheme('yellow')" title="Yellow"></div>
+                <div class="theme-dot white" onclick="setTheme('white')" title="White"></div>
+                <div class="theme-dot dark-pastel" onclick="setTheme('dark-pastel')" title="Dark Pastel"></div>
+            </div>
+            <button class="lang-btn" onclick="toggleLang()" id="langToggle">🇮🇷 FA</button>
+            <button class="btn btn-primary" onclick="showLogin()" data-key="login_btn">Login / Register</button>
+        </div>
+    </nav>
+
+    <!-- ===== CONTAINER ===== -->
     <div class="container">
 
-        <!-- ===== LOGIN ===== -->
-        <div id="loginBox">
-            <h2 data-key="login_title">🔐 ورود / ثبت‌نام</h2>
-            <p style="color:var(--muted);margin-bottom:16px;" data-key="login_sub">نام کاربری و رمز عبور خود را وارد کنید.</p>
-            <input type="text" id="loginUsername" placeholder="نام کاربری" />
-            <input type="password" id="loginPassword" placeholder="رمز عبور" />
-            <button class="btn" onclick="login()" data-key="login_btn">ورود</button>
-            <button class="btn btn-success" onclick="register()" style="margin-right:8px;" data-key="register_btn">ثبت‌نام</button>
-            <div id="loginMessage" style="margin-top:12px;font-size:14px;"></div>
-            <div style="margin-top:16px;">
-                <button class="btn btn-outline" onclick="showAdminLogin()" data-key="admin_login_btn">🔑 ورود مدیریت</button>
+        <!-- ===== HERO ===== -->
+        <section class="hero" id="home">
+            <h1 data-key="hero_title">🚀 Welcome to Daily Progress</h1>
+            <p data-key="hero_desc">Track your daily activities, see your progress and reach your goals! With cheerful colors and a friendly environment.</p>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="showLogin()" data-key="hero_start">Get Started</button>
+                <a href="#features" class="btn btn-outline" data-key="hero_features">Learn More</a>
+            </div>
+        </section>
+
+        <!-- ===== FEATURES ===== -->
+        <section class="features-section" id="features">
+            <h2 style="text-align:center;font-size:32px;margin-bottom:8px;color:var(--text);" data-key="features_title">✨ Why Daily Progress?</h2>
+            <p style="text-align:center;color:var(--text-muted);max-width:600px;margin:0 auto 20px;" data-key="features_desc">A simple tool to track habits, see progress and build a better tomorrow</p>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span class="icon">📊</span>
+                    <h3 data-key="f1_title">Easy Tracking</h3>
+                    <p data-key="f1_desc">Log your daily activities with one click and see your progress.</p>
+                </div>
+                <div class="feature-item">
+                    <span class="icon">📈</span>
+                    <h3 data-key="f2_title">Progress Charts</h3>
+                    <p data-key="f2_desc">Daily and weekly charts show you how close you are to your goals.</p>
+                </div>
+                <div class="feature-item">
+                    <span class="icon">🎨</span>
+                    <h3 data-key="f3_title">Friendly Design</h3>
+                    <p data-key="f3_desc">Cheerful colors and a calming environment that motivates you every day.</p>
+                </div>
+                <div class="feature-item">
+                    <span class="icon">🔒</span>
+                    <h3 data-key="f4_title">Secure & Personal</h3>
+                    <p data-key="f4_desc">Your data is only accessible to you. With a personal account, it's always available.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ABOUT ===== -->
+        <section id="about" style="padding:40px 0;text-align:center;">
+            <h2 style="font-size:28px;margin-bottom:12px;color:var(--text);" data-key="about_title">💡 About Us</h2>
+            <p style="max-width:700px;margin:0 auto;color:var(--text-muted);line-height:1.9;font-size:16px;" data-key="about_text">
+                Daily Progress is a simple and practical tool for tracking daily habits. Our goal is to help you build a more organized life, achieve your goals, and see the small but effective steps of progress. Join us and become better every day.
+            </p>
+        </section>
+
+        <!-- ===== AUTH ===== -->
+        <div id="authBox" class="auth-box hidden">
+            <h2 data-key="auth_title">🔐 Login / Register</h2>
+            <input type="text" id="loginUsername" placeholder="Username" />
+            <input type="password" id="loginPassword" placeholder="Password" />
+            <button class="btn btn-primary" onclick="login()" data-key="login_btn">Login</button>
+            <button class="btn btn-success" onclick="register()" data-key="register_btn">Register</button>
+            <button class="btn btn-outline" onclick="hideLogin()" data-key="cancel_btn">Cancel</button>
+            <div id="loginMessage" style="margin-top:12px;font-size:14px;color:#fb7185;text-align:center;"></div>
+            <div style="margin-top:12px;text-align:center;">
+                <button class="btn btn-sm btn-outline" onclick="showAdminLogin()" data-key="admin_btn">🔑 Admin</button>
             </div>
         </div>
 
         <!-- ===== ADMIN LOGIN ===== -->
-        <div id="adminLoginBox" class="hidden">
-            <h2 style="color:var(--accent);" data-key="admin_title">🔑 ورود به پنل مدیریت</h2>
-            <p style="color:var(--muted);margin-bottom:16px;" data-key="admin_sub">رمز پنل مدیریت را وارد کنید.</p>
-            <input type="password" id="adminPassword" placeholder="رمز مدیریت" style="width:100%;max-width:300px;padding:12px;border-radius:30px;border:2px solid var(--muted);background:var(--bg);color:var(--text);margin-bottom:12px;font-size:16px;text-align:center;" />
-            <button class="btn" onclick="adminLogin()" data-key="admin_login_btn2">ورود به پنل</button>
-            <button class="btn btn-outline" onclick="backToUserLogin()" data-key="back_btn">بازگشت</button>
-            <div id="adminLoginMessage" style="margin-top:12px;font-size:14px;"></div>
+        <div id="adminLoginBox" class="auth-box hidden">
+            <h2 data-key="admin_title">🔑 Admin Panel</h2>
+            <input type="password" id="adminPassword" placeholder="Admin Password" />
+            <button class="btn btn-primary" onclick="adminLogin()" data-key="admin_login_btn">Login</button>
+            <button class="btn btn-outline" onclick="backToUserLogin()" data-key="back_btn">Back</button>
+            <div id="adminLoginMessage" style="margin-top:12px;font-size:14px;color:#fb7185;text-align:center;"></div>
         </div>
 
         <!-- ===== MAIN APP ===== -->
         <div id="appBox" class="hidden">
-
-            <!-- HEADER -->
-            <div class="header">
-                <h1 data-key="app_title">📊 پیگیری عادت‌ها</h1>
-                <div class="user-info">
-                    <span id="displayUser">کاربر</span>
-                    <button class="btn btn-outline" onclick="logout()" data-key="logout_btn">🚪 خروج</button>
-                    <button class="btn btn-outline" onclick="toggleTheme()" data-key="theme_btn">🌙 تم</button>
-                    <button class="btn btn-outline" onclick="toggleLang()" data-key="lang_btn">🇬🇧 EN</button>
+            <div class="app-header">
+                <h2 data-key="app_title">📊 Daily Progress</h2>
+                <div class="user-badge">
+                    <span id="displayUser" style="color:var(--text-muted);">User</span>
+                    <button class="btn btn-sm btn-danger" onclick="logout()" data-key="logout_btn">🚪 Logout</button>
                 </div>
             </div>
-
-            <!-- FORM -->
-            <div class="form-row">
-                <input type="text" id="habitInput" placeholder="مثلاً: ورزش روزانه" />
-                <button class="btn" onclick="addHabit()" data-key="add_btn">➕ افزودن عادت</button>
+            <div style="text-align:center;color:var(--text-muted);font-size:14px;margin-bottom:12px;">
+                📅 <span id="currentDate"></span>
             </div>
-
-            <!-- LIST -->
-            <div id="habitList"></div>
-
-            <!-- CHART -->
-            <div class="chart-container">
-                <h3 data-key="chart_title">📈 پیشرفت هفتگی</h3>
-                <canvas id="progressChart"></canvas>
+            <div class="activities-grid" id="activitiesGrid"></div>
+            <div class="add-activity">
+                <input type="text" id="customActivityInput" placeholder="➕ New activity..." />
+                <button class="btn btn-primary" onclick="addCustomActivity()" data-key="add_btn">Add</button>
             </div>
-
+            <button class="btn btn-success" style="width:100%;margin:10px 0;" onclick="saveDaily()" data-key="save_btn">💾 Save Today</button>
+            <div class="charts-row">
+                <div class="chart-box">
+                    <h3 data-key="daily_chart">📈 Today</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3 data-key="weekly_chart">📊 This Week</h3>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- ===== ADMIN PANEL ===== -->
         <div id="adminPanel" class="hidden">
-            <div class="header">
-                <h1 data-key="admin_panel_title">🔐 پنل مدیریت</h1>
-                <button class="btn btn-outline" onclick="backToUserLogin()" data-key="admin_exit_btn">🚪 خروج از مدیریت</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                <h2 data-key="admin_panel_title">🔐 Admin Panel</h2>
+                <button class="btn btn-sm btn-danger" onclick="backToUserLogin()" data-key="admin_exit_btn">🚪 Exit Admin</button>
             </div>
-            <div id="adminContent">
-                <p style="color:var(--muted);margin-bottom:12px;" data-key="admin_stats">📊 لیست کاربران و عادت‌های آنها</p>
-                <div id="adminTableContainer"></div>
-            </div>
+            <div id="adminTableContainer"></div>
         </div>
 
     </div>
 
     <script>
         // ==============================================
-        //  تنظیمات Google Sheets (لینک شما)
+        //  THEME SYSTEM
         // ==============================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXCve29A1wIfLzWiJwhHcTMsk55KiYIKIAZgiGisgQVgiBnyfOoonDLgZ-HOKV_GYP/exec";
+        function setTheme(theme) {
+            const body = document.body;
+            body.className = body.className
+                .split(' ')
+                .filter(c => !c.startsWith('theme-'))
+                .join(' ');
+            body.classList.add('theme-' + theme);
+
+            document.querySelectorAll('.theme-dot').forEach(dot => {
+                dot.classList.toggle('active', dot.classList.contains(theme));
+            });
+
+            localStorage.setItem('selectedTheme', theme);
+            document.querySelector('.spinner').style.borderTopColor = getComputedStyle(document.documentElement)
+                .getPropertyValue('--primary').trim() || '#f472b6';
+            updateGlowColor(theme);
+            setTimeout(updateCharts, 100);
+        }
+
+        function updateGlowColor(theme) {
+            const glow = document.getElementById('glow');
+            const colors = {
+                pink: 'rgba(244, 114, 182, 0.25)',
+                blue: 'rgba(96, 165, 250, 0.25)',
+                green: 'rgba(52, 211, 153, 0.25)',
+                purple: 'rgba(167, 139, 250, 0.25)',
+                yellow: 'rgba(252, 211, 77, 0.25)',
+                white: 'rgba(148, 163, 184, 0.15)',
+                'dark-pastel': 'rgba(129, 140, 248, 0.25)'
+            };
+            glow.style.background = `radial-gradient(circle, ${colors[theme] || colors.pink} 0%, transparent 70%)`;
+        }
+
+        const savedTheme = localStorage.getItem('selectedTheme') || 'pink';
+        setTheme(savedTheme);
+
+        // ==============================================
+        //  CURSOR GLOW
+        // ==============================================
+        const glow = document.getElementById('glow');
+        let glowTimeout;
+
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            glow.style.left = x + 'px';
+            glow.style.top = y + 'px';
+            glow.style.opacity = '1';
+            clearTimeout(glowTimeout);
+            glowTimeout = setTimeout(() => {
+                glow.style.opacity = '0';
+            }, 300);
+        });
+
+        document.addEventListener('mouseleave', () => {
+            glow.style.opacity = '0';
+        });
 
         // ==============================================
         //  ترجمه‌ها
         // ==============================================
         const translations = {
-            fa: {
-                'login_title': '🔐 ورود / ثبت‌نام',
-                'login_sub': 'نام کاربری و رمز عبور خود را وارد کنید.',
-                'login_btn': 'ورود',
-                'register_btn': 'ثبت‌نام',
-                'admin_login_btn': '🔑 ورود مدیریت',
-                'admin_title': '🔑 ورود به پنل مدیریت',
-                'admin_sub': 'رمز پنل مدیریت را وارد کنید.',
-                'admin_login_btn2': 'ورود به پنل',
-                'back_btn': 'بازگشت',
-                'app_title': '📊 پیگیری عادت‌ها',
-                'logout_btn': '🚪 خروج',
-                'theme_btn': '🌙 تم',
-                'lang_btn': '🇬🇧 EN',
-                'add_btn': '➕ افزودن عادت',
-                'chart_title': '📈 پیشرفت هفتگی',
-                'admin_panel_title': '🔐 پنل مدیریت',
-                'admin_exit_btn': '🚪 خروج از مدیریت',
-                'admin_stats': '📊 لیست کاربران و عادت‌های آنها',
-                'no_habits': 'هنوز عادتی ثبت نشده است.',
-                'no_users': 'هیچ کاربری ثبت نشده است.',
-                'total_users': 'تعداد کل کاربران:',
-                'username': 'نام کاربری',
-                'habits_count': 'تعداد عادت‌ها',
-                'last_activity': 'آخرین فعالیت',
-            },
             en: {
-                'login_title': '🔐 Login / Register',
-                'login_sub': 'Enter your username and password.',
-                'login_btn': 'Login',
-                'register_btn': 'Register',
-                'admin_login_btn': '🔑 Admin Login',
-                'admin_title': '🔑 Admin Panel Login',
-                'admin_sub': 'Enter admin password.',
-                'admin_login_btn2': 'Enter Panel',
-                'back_btn': 'Back',
-                'app_title': '📊 Habit Tracker',
-                'logout_btn': '🚪 Logout',
-                'theme_btn': '🌙 Theme',
-                'lang_btn': '🇮🇷 FA',
-                'add_btn': '➕ Add Habit',
-                'chart_title': '📈 Weekly Progress',
-                'admin_panel_title': '🔐 Admin Panel',
-                'admin_exit_btn': '🚪 Exit Admin',
-                'admin_stats': '📊 Users and their habits',
-                'no_habits': 'No habits registered yet.',
-                'no_users': 'No users registered.',
-                'total_users': 'Total users:',
-                'username': 'Username',
-                'habits_count': 'Habits Count',
-                'last_activity': 'Last Activity',
+                logo: '✨ Daily Progress',
+                nav_home: 'Home',
+                nav_features: 'Features',
+                nav_about: 'About',
+                login_btn: 'Login / Register',
+                hero_title: '🚀 Welcome to Daily Progress',
+                hero_desc: 'Track your daily activities, see your progress and reach your goals! With cheerful colors and a friendly environment.',
+                hero_start: 'Get Started',
+                hero_features: 'Learn More',
+                features_title: '✨ Why Daily Progress?',
+                features_desc: 'A simple tool to track habits, see progress and build a better tomorrow',
+                f1_title: '📊 Easy Tracking',
+                f1_desc: 'Log your daily activities with one click and see your progress.',
+                f2_title: '📈 Progress Charts',
+                f2_desc: 'Daily and weekly charts show you how close you are to your goals.',
+                f3_title: '🎨 Friendly Design',
+                f3_desc: 'Cheerful colors and a calming environment that motivates you every day.',
+                f4_title: '🔒 Secure & Personal',
+                f4_desc: 'Your data is only accessible to you. With a personal account, it\'s always available.',
+                about_title: '💡 About Us',
+                about_text: 'Daily Progress is a simple and practical tool for tracking daily habits. Our goal is to help you build a more organized life, achieve your goals, and see the small but effective steps of progress. Join us and become better every day.',
+                auth_title: '🔐 Login / Register',
+                register_btn: 'Register',
+                cancel_btn: 'Cancel',
+                admin_btn: '🔑 Admin',
+                admin_title: '🔑 Admin Panel',
+                admin_login_btn: 'Login',
+                back_btn: 'Back',
+                app_title: '📊 Daily Progress',
+                logout_btn: '🚪 Logout',
+                add_btn: 'Add',
+                save_btn: '💾 Save Today',
+                daily_chart: '📈 Today',
+                weekly_chart: '📊 This Week',
+                admin_panel_title: '🔐 Admin Panel',
+                admin_exit_btn: '🚪 Exit Admin',
+                loading: '⏳ Please wait...',
+                edit_btn: '✏️ Edit',
+                delete_btn: '🗑️ Delete',
+            },
+            fa: {
+                logo: '✨ پیشرفت روزانه',
+                nav_home: 'خانه',
+                nav_features: 'ویژگی‌ها',
+                nav_about: 'درباره',
+                login_btn: 'ورود / ثبت‌نام',
+                hero_title: '🚀 به پیشرفت روزانه خوش آمدید',
+                hero_desc: 'فعالیت‌های روزانه‌ات را ثبت کن، پیشرفت‌ت را ببین و به اهداف‌ت برس! با رنگ‌های شاد و محیطی دوست‌داشتنی.',
+                hero_start: 'شروع کن',
+                hero_features: 'بیشتر بدان',
+                features_title: '✨ چرا پیشرفت روزانه؟',
+                features_desc: 'ابزاری ساده برای ثبت عادت‌ها، مشاهده‌ی پیشرفت و ساختن فردایی بهتر',
+                f1_title: '📊 ثبت آسان',
+                f1_desc: 'فعالیت‌های روزانه را با یک کلیک ثبت کن و پیشرفت خود را ببین.',
+                f2_title: '📈 نمودارهای پیشرفت',
+                f2_desc: 'نمودارهای روزانه و هفتگی به تو نشان می‌دهند چقدر به اهدافت نزدیک شده‌ای.',
+                f3_title: '🎨 طراحی دوست‌داشتنی',
+                f3_desc: 'رنگ‌های شاد و محیطی آرامش‌بخش که هر روز به تو انگیزه می‌دهد.',
+                f4_title: '🔒 امن و شخصی',
+                f4_desc: 'داده‌های تو فقط در اختیار خودت است. با حساب کاربری شخصی، همیشه در دسترس است.',
+                about_title: '💡 درباره‌ی ما',
+                about_text: 'پیشرفت روزانه یک ابزار ساده و کاربردی برای ثبت و پیگیری عادت‌های روزانه است. هدف ما کمک به شما برای ساختن زندگی منظم‌تر، رسیدن به اهداف و مشاهده‌ی پیشرفت‌های کوچک اما مؤثر است. با ما همراه شوید و هر روز بهتر از دیروز باشید.',
+                auth_title: '🔐 ورود / ثبت‌نام',
+                register_btn: 'ثبت‌نام',
+                cancel_btn: 'انصراف',
+                admin_btn: '🔑 مدیریت',
+                admin_title: '🔑 پنل مدیریت',
+                admin_login_btn: 'ورود',
+                back_btn: 'بازگشت',
+                app_title: '📊 پیشرفت روزانه',
+                logout_btn: '🚪 خروج',
+                add_btn: 'افزودن',
+                save_btn: '💾 ذخیره امروز',
+                daily_chart: '📈 امروز',
+                weekly_chart: '📊 این هفته',
+                admin_panel_title: '🔐 مدیریت',
+                admin_exit_btn: '🚪 خروج از مدیریت',
+                loading: '⏳ لطفاً صبر کنید...',
+                edit_btn: '✏️ ویرایش',
+                delete_btn: '🗑️ حذف',
             }
         };
 
-        // ==============================================
-        //  وضعیت
-        // ==============================================
-        let currentLang = 'fa';
-        let habits = [];
-        let chartInstance = null;
-        let currentUser = null;
-        let isAdmin = false;
+        let currentLang = 'en';
 
         // ==============================================
-        //  توابع Google Sheets
+        //  LANGUAGE - درست شده
         // ==============================================
-        async function syncWithSheet(action, data) {
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, ...data })
-                });
-                // با no-cors نمی‌توانیم پاسخ بخوانیم، اما داده ارسال می‌شود.
-                return { success: true };
-            } catch (e) {
-                console.error('❌ خطا در ارتباط با Google Sheets:', e);
-                return { success: false, error: e.message };
-            }
-        }
-
-        async function loadFromSheet() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const result = await response.json();
-                return result.users || {};
-            } catch (e) {
-                console.error('❌ خطا در دریافت داده‌ها:', e);
-                return {};
-            }
-        }
-
-        // ==============================================
-        //  احراز هویت با Google Sheets
-        // ==============================================
-        async function login() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const msg = document.getElementById('loginMessage');
-
-            if (!username || !password) {
-                msg.textContent = currentLang === 'fa' ? 'لطفاً نام کاربری و رمز را وارد کنید.' : 'Please enter username and password.';
-                msg.style.color = '#ef4444';
-                return;
-            }
-
-            const users = await loadFromSheet();
-            if (users[username] && users[username].password === password) {
-                currentUser = username;
-                habits = users[username].habits || [];
-                document.getElementById('loginBox').classList.add('hidden');
-                document.getElementById('appBox').classList.remove('hidden');
-                document.getElementById('displayUser').textContent = username;
-                msg.textContent = '';
-                render();
-            } else {
-                msg.textContent = currentLang === 'fa' ? 'نام کاربری یا رمز اشتباه است.' : 'Username or password is incorrect.';
-                msg.style.color = '#ef4444';
-            }
-        }
-
-        async function register() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const msg = document.getElementById('loginMessage');
-
-            if (!username || !password) {
-                msg.textContent = currentLang === 'fa' ? 'لطفاً نام کاربری و رمز را وارد کنید.' : 'Please enter username and password.';
-                msg.style.color = '#ef4444';
-                return;
-            }
-            if (password.length < 4) {
-                msg.textContent = currentLang === 'fa' ? 'رمز باید حداقل ۴ کاراکتر باشد.' : 'Password must be at least 4 characters.';
-                msg.style.color = '#ef4444';
-                return;
-            }
-
-            const users = await loadFromSheet();
-            if (users[username]) {
-                msg.textContent = currentLang === 'fa' ? 'این نام کاربری قبلاً ثبت شده است.' : 'This username already exists.';
-                msg.style.color = '#ef4444';
-                return;
-            }
-
-            const result = await syncWithSheet('register', { username, password, habits: [] });
-            if (result.success) {
-                msg.textContent = currentLang === 'fa' ? '✅ ثبت‌نام موفق! حالا وارد شوید.' : '✅ Registration successful! Now login.';
-                msg.style.color = '#22c55e';
-                setTimeout(() => { msg.textContent = ''; }, 3000);
-            } else {
-                msg.textContent = currentLang === 'fa' ? '❌ خطا در ثبت‌نام. دوباره تلاش کن.' : '❌ Registration error. Try again.';
-                msg.style.color = '#ef4444';
-            }
-        }
-
-        async function logout() {
-            if (currentUser) {
-                await syncWithSheet('update', { username: currentUser, password: 'dummy', habits });
-            }
-            currentUser = null;
-            habits = [];
-            document.getElementById('loginBox').classList.remove('hidden');
-            document.getElementById('appBox').classList.add('hidden');
-            document.getElementById('adminPanel').classList.add('hidden');
-            isAdmin = false;
-            render();
-        }
-
-        // ==============================================
-        //  پنل مدیریت
-        // ==============================================
-        function showAdminLogin() {
-            document.getElementById('loginBox').classList.add('hidden');
-            document.getElementById('adminLoginBox').classList.remove('hidden');
-            translatePage();
-        }
-
-        function backToUserLogin() {
-            document.getElementById('adminLoginBox').classList.add('hidden');
-            document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('loginBox').classList.remove('hidden');
-            isAdmin = false;
-            translatePage();
-        }
-
-        async function adminLogin() {
-            const password = document.getElementById('adminPassword').value;
-            const msg = document.getElementById('adminLoginMessage');
-
-            if (password === '0101') {
-                isAdmin = true;
-                document.getElementById('adminLoginBox').classList.add('hidden');
-                document.getElementById('appBox').classList.add('hidden');
-                document.getElementById('loginBox').classList.add('hidden');
-                document.getElementById('adminPanel').classList.remove('hidden');
-                msg.textContent = '';
-                await renderAdminPanel();
-                translatePage();
-            } else {
-                msg.textContent = currentLang === 'fa' ? '❌ رمز مدیریت اشتباه است.' : '❌ Admin password is incorrect.';
-                msg.style.color = '#ef4444';
-            }
-        }
-
-        async function renderAdminPanel() {
-            const container = document.getElementById('adminTableContainer');
-            const users = await loadFromSheet();
-            const usernames = Object.keys(users);
-
-            if (usernames.length === 0) {
-                container.innerHTML = `<p style="color:var(--muted);">${translations[currentLang]['no_users']}</p>`;
-                return;
-            }
-
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>${translations[currentLang]['username']}</th>
-                            <th>${translations[currentLang]['habits_count']}</th>
-                            <th>${translations[currentLang]['last_activity']}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            usernames.forEach((user, index) => {
-                const habitCount = (users[user].habits || []).length;
-                const lastActivity = users[user].lastActivity || 'نامشخص';
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${user}</td>
-                        <td>${habitCount}</td>
-                        <td>${lastActivity}</td>
-                    </tr>
-                `;
-            });
-
-            html += `
-                    </tbody>
-                </table>
-                <p style="color:var(--muted);margin-top:12px;font-size:13px;">${translations[currentLang]['total_users']} ${usernames.length}</p>
-            `;
-
-            container.innerHTML = html;
-        }
-
-        // ==============================================
-        //  توابع Habit Tracker
-        // ==============================================
-        async function saveHabits() {
-            if (!currentUser) return;
-            await syncWithSheet('update', {
-                username: currentUser,
-                password: 'dummy',
-                habits: habits,
-                lastActivity: new Date().toLocaleString('fa-IR')
-            });
-        }
-
-        async function addHabit() {
-            const input = document.getElementById('habitInput');
-            const name = input.value.trim();
-            if (!name) {
-                alert(currentLang === 'fa' ? 'لطفاً نام عادت را وارد کنید.' : 'Please enter habit name.');
-                return;
-            }
-            habits.push({ id: Date.now(), name: name, days: {} });
-            await saveHabits();
-            render();
-            input.value = '';
-        }
-
-        async function deleteHabit(id) {
-            habits = habits.filter(h => h.id !== id);
-            await saveHabits();
-            render();
-        }
-
-        async function toggleDay(habitId, date) {
-            const habit = habits.find(h => h.id === habitId);
-            if (!habit) return;
-            if (habit.days[date]) {
-                delete habit.days[date];
-            } else {
-                habit.days[date] = true;
-            }
-            await saveHabits();
-            render();
-        }
-
-        function getWeekDates() {
-            const today = new Date();
-            const week = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(today.getDate() - i);
-                week.push(d.toISOString().split('T')[0]);
-            }
-            return week;
-        }
-
-        function getHabitStats(habit) {
-            const week = getWeekDates();
-            let done = 0;
-            week.forEach(date => {
-                if (habit.days[date]) done++;
-            });
-            return { done, total: week.length, percent: Math.round((done / week.length) * 100) };
-        }
-
-        // ==============================================
-        //  رندر و نمودار
-        // ==============================================
-        function render() {
-            const list = document.getElementById('habitList');
-            list.innerHTML = '';
-
-            if (habits.length === 0) {
-                list.innerHTML = `<p style="color:var(--muted);text-align:center;">${translations[currentLang]['no_habits']}</p>`;
-                updateChart();
-                return;
-            }
-
-            const week = getWeekDates();
-
-            habits.forEach(habit => {
-                const stats = getHabitStats(habit);
-                const div = document.createElement('div');
-                div.className = 'habit-item';
-
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'habit-info';
-                infoDiv.innerHTML = `
-                    <span class="habit-name">${habit.name}</span>
-                    <span class="habit-stats">✅ ${stats.done}/${stats.total} (${stats.percent}%)</span>
-                `;
-
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'habit-actions';
-
-                week.forEach(date => {
-                    const label = document.createElement('label');
-                    label.style.display = 'inline-flex';
-                    label.style.alignItems = 'center';
-                    label.style.gap = '2px';
-                    label.style.fontSize = '12px';
-                    label.style.color = 'var(--muted)';
-                    const cb = document.createElement('input');
-                    cb.type = 'checkbox';
-                    cb.className = 'habit-check';
-                    cb.checked = !!habit.days[date];
-                    cb.addEventListener('change', () => toggleDay(habit.id, date));
-                    const dayName = new Date(date + 'T00:00:00').toLocaleDateString(currentLang === 'fa' ? 'fa-IR' : 'en-US', { weekday: 'short' });
-                    label.appendChild(cb);
-                    label.appendChild(document.createTextNode(dayName));
-                    actionsDiv.appendChild(label);
-                });
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-danger';
-                deleteBtn.textContent = '✕';
-                deleteBtn.style.padding = '4px 10px';
-                deleteBtn.style.fontSize = '13px';
-                deleteBtn.onclick = () => deleteHabit(habit.id);
-                actionsDiv.appendChild(deleteBtn);
-
-                div.appendChild(infoDiv);
-                div.appendChild(actionsDiv);
-                list.appendChild(div);
-            });
-
-            updateChart();
-        }
-
-        function updateChart() {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-
-            const week = getWeekDates();
-            const labels = week.map(d => new Date(d + 'T00:00:00').toLocaleDateString(currentLang === 'fa' ? 'fa-IR' : 'en-US', { weekday: 'short' }));
-
-            const datasets = habits.map(habit => {
-                const data = week.map(date => habit.days[date] ? 1 : 0);
-                const colors = ['#6366f1', '#22d3ee', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#f472b6'];
-                const color = colors[habits.indexOf(habit) % colors.length];
-                return {
-                    label: habit.name,
-                    data: data,
-                    borderColor: color,
-                    backgroundColor: color + '44',
-                    borderWidth: 2,
-                    tension: 0.2,
-                    pointRadius: 4,
-                };
-            });
-
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top', labels: { color: 'var(--text)' } }
-                    },
-                    scales: {
-                        y: { min: 0, max: 1.2, ticks: { stepSize: 1, color: 'var(--muted)' }, grid: { color: 'rgba(128,128,128,0.1)' } },
-                        x: { ticks: { color: 'var(--muted)' }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // ==============================================
-        //  تم و زبان
-        // ==============================================
-        function toggleTheme() {
-            document.body.classList.toggle('dark');
-            const btns = document.querySelectorAll('.btn-outline');
-            btns.forEach(b => {
-                if (b.textContent.includes('تم') || b.textContent.includes('Theme')) {
-                    b.textContent = document.body.classList.contains('dark') ? '☀️ ' + (currentLang === 'fa' ? 'تم' : 'Theme') : '🌙 ' + (currentLang === 'fa' ? 'تم' : 'Theme');
-                }
-            });
-            setTimeout(updateChart, 50);
-        }
-
         function toggleLang() {
-            currentLang = currentLang === 'fa' ? 'en' : 'fa';
-            document.documentElement.lang = currentLang;
-            document.documentElement.dir = currentLang === 'fa' ? 'rtl' : 'ltr';
-            document.querySelector('.lang-toggle').textContent = currentLang === 'fa' ? '🇬🇧 EN' : '🇮🇷 FA';
+            if (currentLang === 'en') {
+                currentLang = 'fa';
+                document.documentElement.lang = 'fa';
+                document.documentElement.dir = 'rtl';
+                document.getElementById('langToggle').textContent = '🇬🇧 EN';
+            } else {
+                currentLang = 'en';
+                document.documentElement.lang = 'en';
+                document.documentElement.dir = 'ltr';
+                document.getElementById('langToggle').textContent = '🇮🇷 FA';
+            }
             translatePage();
-            render();
-            if (isAdmin) renderAdminPanel();
         }
 
         function translatePage() {
@@ -792,10 +1012,363 @@
                     el.textContent = translations[currentLang][key];
                 }
             });
-            const themeBtns = document.querySelectorAll('.btn-outline');
-            themeBtns.forEach(b => {
-                if (b.textContent.includes('تم') || b.textContent.includes('Theme')) {
-                    b.textContent = document.body.classList.contains('dark') ? '☀️ ' + (currentLang === 'fa' ? 'تم' : 'Theme') : '🌙 ' + (currentLang === 'fa' ? 'تم' : 'Theme');
+        }
+
+        // ==============================================
+        //  داده‌ها و وضعیت
+        // ==============================================
+        const PRESET_ACTIVITIES = [
+            { id: 'sport', icon: '🏋️', name: 'ورزش' },
+            { id: 'study', icon: '📚', name: 'مطالعه' },
+            { id: 'meditate', icon: '🧘', name: 'مدیتیشن' },
+            { id: 'walk', icon: '🚶', name: 'پیاده‌روی' },
+            { id: 'read', icon: '📖', name: 'کتاب خواندن' },
+        ];
+        let activities = [];
+        let dailyCounts = {};
+        let chartDaily = null;
+        let chartWeekly = null;
+        let currentUser = null;
+        let isAdmin = false;
+        let editingIndex = null;
+
+        // ==============================================
+        //  کاربران (localStorage)
+        // ==============================================
+        function getUsers() {
+            return JSON.parse(localStorage.getItem('dailyUsers') || '{}');
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem('dailyUsers', JSON.stringify(users));
+        }
+
+        // ==============================================
+        //  نمایش/مخفی‌سازی بخش‌ها
+        // ==============================================
+        function showLogin() {
+            document.getElementById('authBox').classList.remove('hidden');
+            document.querySelector('.hero').style.display = 'none';
+        }
+
+        function hideLogin() {
+            document.getElementById('authBox').classList.add('hidden');
+            document.querySelector('.hero').style.display = 'block';
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        // ==============================================
+        //  احراز هویت
+        // ==============================================
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const msg = document.getElementById('loginMessage');
+
+            if (!username || !password) {
+                msg.textContent = currentLang === 'en' ? 'Please enter username and password.' :
+                    'لطفاً نام کاربری و رمز را وارد کنید.';
+                return;
+            }
+            showLoading();
+            setTimeout(() => {
+                const users = getUsers();
+                if (users[username] && users[username].password === password) {
+                    currentUser = username;
+                    activities = users[username].activities || PRESET_ACTIVITIES.map(a => ({ ...a }));
+                    dailyCounts = users[username].dailyCounts || {};
+                    document.getElementById('authBox').classList.add('hidden');
+                    document.querySelector('.hero').style.display = 'none';
+                    document.getElementById('appBox').classList.remove('hidden');
+                    document.getElementById('displayUser').textContent = username;
+                    msg.textContent = '';
+                    renderApp();
+                } else {
+                    msg.textContent = currentLang === 'en' ? 'Username or password is incorrect.' :
+                        'نام کاربری یا رمز اشتباه است.';
+                }
+                hideLoading();
+            }, 800);
+        }
+
+        function register() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const msg = document.getElementById('loginMessage');
+
+            if (!username || !password) {
+                msg.textContent = currentLang === 'en' ? 'Please enter username and password.' :
+                    'لطفاً نام کاربری و رمز را وارد کنید.';
+                return;
+            }
+            if (password.length < 4) {
+                msg.textContent = currentLang === 'en' ? 'Password must be at least 4 characters.' :
+                    'رمز باید حداقل ۴ کاراکتر باشد.';
+                return;
+            }
+            showLoading();
+            setTimeout(() => {
+                const users = getUsers();
+                if (users[username]) {
+                    msg.textContent = currentLang === 'en' ? 'This username already exists.' :
+                        'این نام کاربری قبلاً ثبت شده است.';
+                    hideLoading();
+                    return;
+                }
+                users[username] = {
+                    password,
+                    activities: PRESET_ACTIVITIES.map(a => ({ ...a })),
+                    dailyCounts: {}
+                };
+                saveUsers(users);
+                msg.textContent = currentLang === 'en' ? '✅ Registration successful! Now login.' :
+                    '✅ ثبت‌نام موفق! حالا وارد شوید.';
+                msg.style.color = '#34d399';
+                setTimeout(() => { msg.style.color = '#fb7185'; }, 3000);
+                hideLoading();
+            }, 800);
+        }
+
+        function logout() {
+            saveUserData();
+            currentUser = null;
+            activities = [];
+            dailyCounts = {};
+            document.getElementById('appBox').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.querySelector('.hero').style.display = 'block';
+            isAdmin = false;
+        }
+
+        function saveUserData() {
+            if (!currentUser) return;
+            const users = getUsers();
+            if (users[currentUser]) {
+                users[currentUser].activities = activities;
+                users[currentUser].dailyCounts = dailyCounts;
+                users[currentUser].lastActivity = new Date().toLocaleString('fa-IR');
+                saveUsers(users);
+            }
+        }
+
+        // ==============================================
+        //  پنل مدیریت
+        // ==============================================
+        function showAdminLogin() {
+            document.getElementById('authBox').classList.add('hidden');
+            document.getElementById('adminLoginBox').classList.remove('hidden');
+        }
+
+        function backToUserLogin() {
+            document.getElementById('adminLoginBox').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('authBox').classList.remove('hidden');
+            isAdmin = false;
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            const msg = document.getElementById('adminLoginMessage');
+            if (password === '0101') {
+                isAdmin = true;
+                document.getElementById('adminLoginBox').classList.add('hidden');
+                document.getElementById('appBox').classList.add('hidden');
+                document.getElementById('authBox').classList.add('hidden');
+                document.querySelector('.hero').style.display = 'none';
+                document.getElementById('adminPanel').classList.remove('hidden');
+                msg.textContent = '';
+                renderAdminPanel();
+            } else {
+                msg.textContent = currentLang === 'en' ? '❌ Admin password is incorrect.' :
+                    '❌ رمز مدیریت اشتباه است.';
+            }
+        }
+
+        function renderAdminPanel() {
+            const container = document.getElementById('adminTableContainer');
+            const users = getUsers();
+            const usernames = Object.keys(users);
+            if (usernames.length === 0) {
+                container.innerHTML =
+                    `<p style="color:var(--text-muted);">${currentLang === 'en' ? 'No users registered.' : 'هیچ کاربری ثبت نشده است.'}</p>`;
+                return;
+            }
+            let html = `
+                <table>
+                    <thead><tr>
+                        <th>#</th>
+                        <th>${currentLang === 'en' ? 'User' : 'کاربر'}</th>
+                        <th>${currentLang === 'en' ? 'Activities' : 'فعالیت‌ها'}</th>
+                        <th>${currentLang === 'en' ? 'Last Activity' : 'آخرین فعالیت'}</th>
+                    </tr></thead><tbody>
+            `;
+            usernames.forEach((user, i) => {
+                const acts = users[user].activities || [];
+                const last = users[user].lastActivity || 'نامشخص';
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td>${user}</td>
+                    <td>${acts.length}</td>
+                    <td>${last}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>
+                <p style="color:var(--text-muted);margin-top:12px;">${currentLang === 'en' ? '📊 Total users:' : '📊 تعداد کل کاربران:'} ${usernames.length}</p>
+            `;
+            container.innerHTML = html;
+        }
+
+        // ==============================================
+        //  عملیات روی فعالیت‌ها
+        // ==============================================
+        function deleteActivity(index) {
+            if (confirm(currentLang === 'en' ? 'Are you sure you want to delete this activity?' :
+                    'آیا از حذف این فعالیت مطمئن هستید?')) {
+                activities.splice(index, 1);
+                saveUserData();
+                renderApp();
+            }
+        }
+
+        function startEdit(index) {
+            editingIndex = index;
+            const act = activities[index];
+            const newName = prompt(currentLang === 'en' ? 'Enter new name:' : 'نام جدید را وارد کنید:', act.name);
+            if (newName && newName.trim()) {
+                act.name = newName.trim();
+                const newIcon = prompt(currentLang === 'en' ? 'Enter new icon (an emoji):' :
+                    'آیکون جدید را وارد کنید (یک ایموجی):', act.icon);
+                if (newIcon && newIcon.trim()) {
+                    act.icon = newIcon.trim();
+                }
+                saveUserData();
+                renderApp();
+            }
+            editingIndex = null;
+        }
+
+        function addCustomActivity() {
+            const input = document.getElementById('customActivityInput');
+            const name = input.value.trim();
+            if (!name) return;
+            const newAct = {
+                id: 'custom_' + Date.now(),
+                icon: '⭐',
+                name: name
+            };
+            activities.push(newAct);
+            saveUserData();
+            input.value = '';
+            renderApp();
+        }
+
+        // ==============================================
+        //  رندر برنامه و نمودارها
+        // ==============================================
+        function renderApp() {
+            const today = new Date().toLocaleDateString(currentLang === 'en' ? 'en-US' : 'fa-IR');
+            document.getElementById('currentDate').textContent = today;
+
+            const grid = document.getElementById('activitiesGrid');
+            grid.innerHTML = '';
+            activities.forEach((act, index) => {
+                const div = document.createElement('div');
+                div.className = 'activity-card';
+                const todayKey = new Date().toISOString().split('T')[0];
+                const count = dailyCounts[todayKey]?.[act.id] || 0;
+                if (count > 0) div.classList.add('done');
+
+                const nameDisplay = act.name.length > 12 ? act.name.slice(0, 10) + '...' : act.name;
+
+                div.innerHTML = `
+                    <span class="icon">${act.icon}</span>
+                    <div class="act-name">${nameDisplay}</div>
+                    <div class="act-count">✅ ${count} ${currentLang === 'en' ? 'times' : 'بار'}</div>
+                    <div class="act-actions">
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); startEdit(${index})" data-key="edit_btn">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteActivity(${index})" data-key="delete_btn">🗑️</button>
+                    </div>
+                `;
+                div.onclick = () => {
+                    if (!dailyCounts[todayKey]) dailyCounts[todayKey] = {};
+                    dailyCounts[todayKey][act.id] = (dailyCounts[todayKey][act.id] || 0) + 1;
+                    renderApp();
+                };
+                grid.appendChild(div);
+            });
+            updateCharts();
+        }
+
+        function saveDaily() {
+            saveUserData();
+            alert(currentLang === 'en' ? '✅ Today\'s activities saved!' : '✅ فعالیت‌های امروز ذخیره شد!');
+        }
+
+        function updateCharts() {
+            const todayKey = new Date().toISOString().split('T')[0];
+            const todayData = dailyCounts[todayKey] || {};
+            const ctxDaily = document.getElementById('dailyChart').getContext('2d');
+            if (chartDaily) chartDaily.destroy();
+            chartDaily = new Chart(ctxDaily, {
+                type: 'bar',
+                data: {
+                    labels: activities.map(a => a.name),
+                    datasets: [{
+                        label: currentLang === 'en' ? 'Today' : 'امروز',
+                        data: activities.map(a => todayData[a.id] || 0),
+                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() ||
+                            '#f472b6',
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            const weekKeys = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                weekKeys.push(d.toISOString().split('T')[0]);
+            }
+            const weekLabels = weekKeys.map(d => new Date(d + 'T00:00:00').toLocaleDateString(currentLang === 'en' ? 'en-US' :
+                'fa-IR', { weekday: 'short' }));
+            const weekTotals = weekKeys.map(day => {
+                const data = dailyCounts[day] || {};
+                return activities.reduce((sum, a) => sum + (data[a.id] || 0), 0);
+            });
+            const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+            if (chartWeekly) chartWeekly.destroy();
+            chartWeekly = new Chart(ctxWeekly, {
+                type: 'line',
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: currentLang === 'en' ? 'Total Activities' : 'مجموع فعالیت‌ها',
+                        data: weekTotals,
+                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() ||
+                            '#f472b6',
+                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() +
+                            '33' || '#f472b633',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                 }
             });
         }
@@ -803,8 +1376,8 @@
         // ==============================================
         //  شروع
         // ==============================================
-        render();
         translatePage();
+        renderApp();
     </script>
 
 </body>
