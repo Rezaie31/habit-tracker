@@ -4,478 +4,127 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>پیشرفت روزانه</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* ===== RESET & BASE ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html {
-            scroll-behavior: smooth;
-        }
         body {
-            font-family: 'Vazirmatn', 'Inter', sans-serif;
-            min-height: 100vh;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-x: hidden;
-            background: var(--bg);
-            color: var(--text);
+            font-family: Tahoma, Arial, sans-serif;
+            background: #f9f9f9;
+            color: #333;
             text-align: center;
+            padding: 20px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 2;
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         .hidden {
             display: none !important;
         }
-
-        /* ===== CURSOR GLOW ===== */
-        #glow {
-            position: fixed;
-            width: 250px;
-            height: 250px;
-            border-radius: 50%;
-            pointer-events: none;
-            background: radial-gradient(circle, rgba(244, 114, 182, 0.25) 0%, transparent 70%);
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-            mix-blend-mode: screen;
-            filter: blur(50px);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        @media (max-width: 768px) {
-            #glow {
-                display: none;
-            }
-        }
-
-        /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--primary-light);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
-        }
-
-        /* ===== THEMES (PASTEL) ===== */
-        .theme-pink {
-            --primary: #f472b6;
-            --primary-light: #fbcfe8;
-            --primary-dark: #ec4899;
-            --primary-gradient: linear-gradient(135deg, #f472b6, #8b5cf6);
-            --bg: #fdf2f8;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text: #1e1b4b;
-            --text-muted: #6b5b7b;
-            --border: #fbcfe8;
-            --shadow: rgba(244, 114, 182, 0.3);
-            --nav-bg: rgba(253, 242, 248, 0.8);
-        }
-        .theme-blue {
-            --primary: #60a5fa;
-            --primary-light: #bfdbfe;
-            --primary-dark: #3b82f6;
-            --primary-gradient: linear-gradient(135deg, #60a5fa, #8b5cf6);
-            --bg: #eff6ff;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text: #1e293b;
-            --text-muted: #475569;
-            --border: #bfdbfe;
-            --shadow: rgba(96, 165, 250, 0.3);
-            --nav-bg: rgba(239, 246, 255, 0.8);
-        }
-        .theme-green {
-            --primary: #34d399;
-            --primary-light: #a7f3d0;
-            --primary-dark: #10b981;
-            --primary-gradient: linear-gradient(135deg, #34d399, #6ee7b7);
-            --bg: #ecfdf5;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text: #064e3b;
-            --text-muted: #047857;
-            --border: #a7f3d0;
-            --shadow: rgba(52, 211, 153, 0.3);
-            --nav-bg: rgba(236, 253, 245, 0.8);
-        }
-        .theme-purple {
-            --primary: #a78bfa;
-            --primary-light: #ddd6fe;
-            --primary-dark: #8b5cf6;
-            --primary-gradient: linear-gradient(135deg, #a78bfa, #8b5cf6);
-            --bg: #f5f3ff;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text: #2e1065;
-            --text-muted: #5b21b6;
-            --border: #ddd6fe;
-            --shadow: rgba(167, 139, 250, 0.3);
-            --nav-bg: rgba(245, 243, 255, 0.8);
-        }
-        .theme-yellow {
-            --primary: #fcd34d;
-            --primary-light: #fde68a;
-            --primary-dark: #f59e0b;
-            --primary-gradient: linear-gradient(135deg, #fcd34d, #fbbf24);
-            --bg: #fffbeb;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text: #78350f;
-            --text-muted: #92400e;
-            --border: #fde68a;
-            --shadow: rgba(252, 211, 77, 0.3);
-            --nav-bg: rgba(255, 251, 235, 0.8);
-        }
-        .theme-white {
-            --primary: #94a3b8;
-            --primary-light: #e2e8f0;
-            --primary-dark: #64748b;
-            --primary-gradient: linear-gradient(135deg, #cbd5e1, #94a3b8);
-            --bg: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --text: #0f172a;
-            --text-muted: #475569;
-            --border: #e2e8f0;
-            --shadow: rgba(148, 163, 184, 0.2);
-            --nav-bg: rgba(248, 250, 252, 0.85);
-        }
-        .theme-dark-pastel {
-            --primary: #818cf8;
-            --primary-light: #a5b4fc;
-            --primary-dark: #6366f1;
-            --primary-gradient: linear-gradient(135deg, #818cf8, #a78bfa);
-            --bg: #0f0a1a;
-            --card-bg: rgba(30, 27, 75, 0.7);
-            --text: #e5e7eb;
-            --text-muted: #9ca3af;
-            --border: #4c1d95;
-            --shadow: rgba(129, 140, 248, 0.2);
-            --nav-bg: rgba(15, 10, 26, 0.8);
-        }
-
-        /* ===== APPLY THEME ===== */
-        nav {
-            background: var(--nav-bg);
-            border-color: var(--border);
-        }
-        .logo {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
         }
         .btn-primary {
-            background: var(--primary-gradient);
-            box-shadow: 0 4px 15px var(--shadow);
+            background: #6366f1;
+            color: #fff;
         }
-        .btn-primary:hover {
-            box-shadow: 0 8px 30px var(--shadow);
+        .btn-success {
+            background: #22c55e;
+            color: #fff;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
         }
         .btn-outline {
-            border-color: var(--primary);
-            color: var(--primary);
+            background: transparent;
+            border: 2px solid #6366f1;
+            color: #6366f1;
         }
-        .btn-outline:hover {
-            background: var(--primary);
-            color: #fff;
-        }
-        .lang-btn {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .lang-btn:hover {
-            background: var(--primary);
-            color: #fff;
-        }
-        .auth-box {
-            background: var(--card-bg);
-            border-color: var(--border);
-        }
-        .auth-box input {
-            border-color: var(--border);
-            background: var(--card-bg);
+        input,
+        select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            width: 80%;
+            margin: 6px 0;
         }
         .activity-card {
-            background: var(--card-bg);
-            border-color: var(--border);
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: 0.3s;
         }
         .activity-card:hover {
-            border-color: var(--primary);
+            background: #e2e8f0;
         }
         .activity-card.done {
-            border-color: #34d399;
-            background: rgba(52, 211, 153, 0.1);
+            background: #bbf7d0;
         }
-        .chart-box {
-            background: var(--card-bg);
-            border-color: var(--border);
+        .activities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
         }
-        #adminPanel {
-            background: var(--card-bg);
-            border-color: var(--border);
+        .chart-container {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
         }
-        #adminPanel th {
-            background: var(--primary);
-            color: #fff;
+        canvas {
+            max-height: 200px;
+            width: 100% !important;
         }
-        .features-section {
-            border-color: var(--border);
+        .auth-box {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 24px;
+            background: #f1f5f9;
+            border-radius: 16px;
         }
-        .feature-item {
-            background: var(--card-bg);
-            border-color: var(--border);
-        }
-        .feature-item:hover {
-            border-color: var(--primary);
-        }
-        .add-activity input {
-            border-color: var(--border);
-            background: var(--card-bg);
-        }
-        .hero h1 {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero p {
-            color: var(--text-muted);
-        }
-        .app-header {
-            border-color: var(--border);
-        }
-
-        /* ===== NAV ===== */
         nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 0;
-            flex-wrap: wrap;
-            gap: 12px;
-            border-bottom: 2px solid var(--border);
-            position: sticky;
-            top: 0;
-            backdrop-filter: blur(12px);
-            z-index: 100;
-            transition: all 0.4s;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: 800;
-            -webkit-text-fill-color: transparent;
-        }
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
+            padding: 12px 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
         }
         .nav-links a {
-            color: inherit;
+            margin: 0 8px;
             text-decoration: none;
+            color: #333;
             font-weight: 500;
-            transition: 0.3s;
-            padding: 6px 12px;
-            border-radius: 40px;
             cursor: pointer;
         }
         .nav-links a:hover {
-            background: var(--primary-light);
-            color: var(--text);
+            color: #6366f1;
         }
-        .btn {
-            border: none;
-            padding: 10px 22px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        .btn-success {
-            background: #34d399;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background: #10b981;
-        }
-        .btn-danger {
-            background: #fb7185;
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background: #f43f5e;
-        }
-        .btn-sm {
-            padding: 6px 14px;
-            font-size: 12px;
-        }
-
-        /* ===== THEME SELECTOR ===== */
-        .theme-selector {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 4px 8px;
-            border-radius: 40px;
-            background: var(--card-bg);
-            border: 2px solid var(--border);
-        }
-        .theme-dot {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-            flex-shrink: 0;
-        }
-        .theme-dot:hover {
-            transform: scale(1.15);
-        }
-        .theme-dot.active {
-            border-color: var(--text);
-            transform: scale(1.1);
-            box-shadow: 0 0 12px var(--shadow);
-        }
-        .theme-dot.pink {
-            background: #f472b6;
-        }
-        .theme-dot.blue {
-            background: #60a5fa;
-        }
-        .theme-dot.green {
-            background: #34d399;
-        }
-        .theme-dot.purple {
-            background: #a78bfa;
-        }
-        .theme-dot.yellow {
-            background: #fcd34d;
-        }
-        .theme-dot.white {
-            background: #e2e8f0;
-            border-color: #94a3b8;
-        }
-        .theme-dot.dark-pastel {
-            background: #4c1d95;
-            border-color: #818cf8;
-        }
-
-        /* ===== HERO ===== */
-        .hero {
-            text-align: center;
-            padding: 80px 20px 60px;
-            min-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .hero h1 {
-            font-size: 52px;
-            font-weight: 800;
-            margin-bottom: 16px;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero p {
-            font-size: 20px;
-            max-width: 650px;
-            margin: 0 auto 24px;
-            line-height: 1.9;
-        }
-        .hero .btn-group {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        /* ===== FEATURES ===== */
-        .features-section {
-            padding: 60px 0;
-            border-top: 2px solid var(--border);
-            border-bottom: 2px solid var(--border);
-            margin: 20px 0;
-        }
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 24px;
-            margin-top: 30px;
-        }
-        .feature-item {
-            padding: 24px 20px;
+        .lang-btn {
+            background: transparent;
+            border: 2px solid #6366f1;
+            color: #6366f1;
+            padding: 4px 12px;
             border-radius: 20px;
-            border: 2px solid var(--border);
-            text-align: center;
-            transition: all 0.3s;
-            backdrop-filter: blur(6px);
+            cursor: pointer;
+            font-weight: 600;
         }
-        .feature-item:hover {
-            transform: translateY(-6px);
-            border-color: var(--primary);
+        .lang-btn:hover {
+            background: #6366f1;
+            color: #fff;
         }
-        .feature-item .icon {
-            font-size: 40px;
-            display: block;
-            margin-bottom: 12px;
-        }
-        .feature-item h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-        .feature-item p {
-            font-size: 14px;
-            color: var(--text-muted);
-            line-height: 1.7;
-        }
-
-        /* ===== AUTH ===== */
-        .auth-box {
-            max-width: 400px;
-            margin: 40px auto;
-            backdrop-filter: blur(10px);
-            padding: 32px;
-            border-radius: 28px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-            border: 2px solid var(--border);
-        }
-        .auth-box h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: var(--text);
-        }
-        .auth-box input {
-            width: 100%;
-            padding: 14px;
-            border-radius: 40px;
-            border: 2px solid var(--border);
-            margin-bottom: 12px;
-            font-size: 16px;
-            text-align: center;
-            color: var(--text);
-        }
-        .auth-box input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .auth-box .btn {
-            width: 100%;
-            margin-bottom: 8px;
-        }
-
-        /* ===== LOADING ===== */
         #loadingOverlay {
             position: fixed;
             top: 0;
@@ -483,18 +132,16 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(6px);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 9998;
+            z-index: 9999;
         }
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--primary);
+            border: 5px solid #ddd;
+            border-top-color: #6366f1;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -504,329 +151,155 @@
             }
         }
         .loading-text {
-            margin-top: 16px;
             color: #fff;
-            font-weight: 600;
-        }
-
-        /* ===== APP ===== */
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid var(--border);
-        }
-        .app-header h2 {
-            font-size: 24px;
-            color: var(--text);
-        }
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .activities-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-            margin: 20px 0;
-        }
-        .activity-card {
-            padding: 18px 14px;
-            border-radius: 20px;
-            border: 2px solid var(--border);
-            text-align: center;
-            transition: all 0.3s;
-            cursor: pointer;
-            position: relative;
-            backdrop-filter: blur(6px);
-        }
-        .activity-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--primary);
-        }
-        .activity-card.done {
-            border-color: #34d399;
-            background: rgba(52, 211, 153, 0.1);
-        }
-        .activity-card .icon {
-            font-size: 32px;
-            display: block;
-            margin-bottom: 6px;
-        }
-        .activity-card .act-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text);
-        }
-        .activity-card .act-count {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .activity-card .act-actions {
-            margin-top: 8px;
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-        }
-        .activity-card .act-actions .btn {
-            padding: 2px 10px;
-            font-size: 10px;
-            border-radius: 30px;
-        }
-        .add-activity {
-            display: flex;
-            gap: 12px;
-            margin: 16px 0;
-            flex-wrap: wrap;
-        }
-        .add-activity input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 40px;
-            border: 2px solid var(--border);
-            background: var(--card-bg);
-            min-width: 150px;
-            color: var(--text);
-        }
-        .add-activity input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        /* ===== CHARTS ===== */
-        .charts-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-top: 30px;
-        }
-        .chart-box {
-            padding: 18px;
-            border-radius: 20px;
-            border: 2px solid var(--border);
-            backdrop-filter: blur(6px);
-        }
-        .chart-box h3 {
-            text-align: center;
-            margin-bottom: 12px;
-            color: var(--text-muted);
-        }
-        canvas {
-            max-height: 180px;
-            width: 100% !important;
-        }
-
-        /* ===== ADMIN ===== */
-        #adminPanel {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 20px;
-            border: 2px solid var(--border);
-            backdrop-filter: blur(6px);
+            margin-top: 12px;
         }
         #adminPanel table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            margin-top: 12px;
         }
         #adminPanel th,
         #adminPanel td {
             padding: 8px 12px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #ddd;
             text-align: center;
-            color: var(--text);
         }
         #adminPanel th {
+            background: #6366f1;
             color: #fff;
         }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 32px;
-            }
-            .hero p {
-                font-size: 16px;
-            }
-            .charts-row {
-                grid-template-columns: 1fr;
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px;
             }
             .activities-grid {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             }
             nav {
                 flex-direction: column;
-                align-items: stretch;
-                text-align: center;
+                gap: 8px;
             }
             .nav-links {
+                display: flex;
+                flex-wrap: wrap;
                 justify-content: center;
-            }
-            .theme-selector {
-                justify-content: center;
-            }
-        }
-        @media (max-width: 480px) {
-            .hero h1 {
-                font-size: 26px;
-            }
-            .container {
-                padding: 12px;
-            }
-            .theme-dot {
-                width: 22px;
-                height: 22px;
+                gap: 8px;
             }
         }
     </style>
 </head>
-<body class="theme-pink">
+<body>
 
-    <!-- ===== CURSOR GLOW ===== -->
-    <div id="glow"></div>
-
-    <!-- ===== LOADING OVERLAY ===== -->
     <div id="loadingOverlay" class="hidden">
         <div class="spinner"></div>
-        <div class="loading-text" data-key="loading">⏳ لطفاً صبر کنید...</div>
+        <div class="loading-text">⏳ لطفاً صبر کنید...</div>
     </div>
 
-    <!-- ===== NAV ===== -->
-    <nav>
-        <div class="logo" data-key="logo">✨ پیشرفت روزانه</div>
-        <div class="nav-links">
-            <a onclick="smoothScroll('home')" data-key="nav_home">خانه</a>
-            <a onclick="smoothScroll('features')" data-key="nav_features">ویژگی‌ها</a>
-            <a onclick="smoothScroll('about')" data-key="nav_about">درباره</a>
-            <div class="theme-selector">
-                <div class="theme-dot pink active" onclick="setTheme('pink')" title="صورتی"></div>
-                <div class="theme-dot blue" onclick="setTheme('blue')" title="آبی"></div>
-                <div class="theme-dot green" onclick="setTheme('green')" title="سبز"></div>
-                <div class="theme-dot purple" onclick="setTheme('purple')" title="بنفش"></div>
-                <div class="theme-dot yellow" onclick="setTheme('yellow')" title="طلایی"></div>
-                <div class="theme-dot white" onclick="setTheme('white')" title="سفید"></div>
-                <div class="theme-dot dark-pastel" onclick="setTheme('dark-pastel')" title="تاریک پاستیلی"></div>
-            </div>
-            <button class="lang-btn" onclick="toggleLang()" id="langToggle">🇬🇧 EN</button>
-            <button class="btn btn-primary" onclick="showLogin()" id="loginNavBtn" data-key="login_btn">ورود / ثبت‌نام</button>
-        </div>
-    </nav>
-
-    <!-- ===== CONTAINER ===== -->
     <div class="container">
 
-        <!-- ===== HERO ===== -->
-        <section class="hero" id="home">
-            <h1 data-key="hero_title">🚀 به پیشرفت روزانه خوش آمدید</h1>
-            <p data-key="hero_desc">فعالیت‌های روزانه‌ات را ثبت کن، پیشرفت‌ت را ببین و به اهداف‌ت برس! با رنگ‌های شاد و محیطی دوست‌داشتنی.</p>
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="showLogin()" data-key="hero_start">شروع کن</button>
-                <a class="btn btn-outline" onclick="smoothScroll('features')" data-key="hero_features">بیشتر بدان</a>
+        <!-- ===== NAV ===== -->
+        <nav>
+            <div style="font-weight:bold;font-size:20px;">✨ پیشرفت روزانه</div>
+            <div class="nav-links">
+                <a onclick="smoothScroll('home')">خانه</a>
+                <a onclick="smoothScroll('features')">ویژگی‌ها</a>
+                <a onclick="smoothScroll('about')">درباره</a>
+                <button class="lang-btn" onclick="toggleLang()" id="langToggle">🇬🇧 EN</button>
+                <button class="btn btn-primary" onclick="showLogin()" id="loginNavBtn">ورود / ثبت‌نام</button>
             </div>
+        </nav>
+
+        <!-- ===== HERO ===== -->
+        <section id="home">
+            <h1>🚀 به پیشرفت روزانه خوش آمدید</h1>
+            <p style="color:#666;max-width:600px;margin:0 auto 16px;">فعالیت‌های روزانه‌ات را ثبت کن، پیشرفت‌ت را ببین و به اهداف‌ت برس!</p>
+            <button class="btn btn-primary" onclick="showLogin()">شروع کن</button>
+            <a class="btn btn-outline" onclick="smoothScroll('features')">بیشتر بدان</a>
         </section>
 
         <!-- ===== FEATURES ===== -->
-        <section class="features-section" id="features">
-            <h2 style="text-align:center;font-size:32px;margin-bottom:8px;color:var(--text);" data-key="features_title">✨ چرا پیشرفت روزانه؟</h2>
-            <p style="text-align:center;color:var(--text-muted);max-width:600px;margin:0 auto 20px;" data-key="features_desc">ابزاری ساده برای ثبت عادت‌ها، مشاهده‌ی پیشرفت و ساختن فردایی بهتر</p>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <span class="icon">📊</span>
-                    <h3 data-key="f1_title">ثبت آسان</h3>
-                    <p data-key="f1_desc">فعالیت‌های روزانه را با یک کلیک ثبت کن و پیشرفت خود را ببین.</p>
+        <section id="features" style="margin-top:48px;">
+            <h2>✨ چرا پیشرفت روزانه؟</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px;">
+                <div style="background:#f1f5f9;padding:20px;border-radius:12px;">
+                    <span style="font-size:40px;">📊</span>
+                    <h3>ثبت آسان</h3>
+                    <p style="color:#666;font-size:14px;">با یک کلیک فعالیت‌های روزانه‌ات را ثبت کن</p>
                 </div>
-                <div class="feature-item">
-                    <span class="icon">📈</span>
-                    <h3 data-key="f2_title">نمودارهای پیشرفت</h3>
-                    <p data-key="f2_desc">نمودارهای روزانه و هفتگی به تو نشان می‌دهند چقدر به اهدافت نزدیک شده‌ای.</p>
+                <div style="background:#f1f5f9;padding:20px;border-radius:12px;">
+                    <span style="font-size:40px;">📈</span>
+                    <h3>نمودارهای پیشرفت</h3>
+                    <p style="color:#666;font-size:14px;">پیشرفت روزانه و هفتگی را ببین</p>
                 </div>
-                <div class="feature-item">
-                    <span class="icon">🎨</span>
-                    <h3 data-key="f3_title">طراحی دوست‌داشتنی</h3>
-                    <p data-key="f3_desc">رنگ‌های شاد و محیطی آرامش‌بخش که هر روز به تو انگیزه می‌دهد.</p>
-                </div>
-                <div class="feature-item">
-                    <span class="icon">🔒</span>
-                    <h3 data-key="f4_title">امن و شخصی</h3>
-                    <p data-key="f4_desc">داده‌های تو فقط در اختیار خودت است. با حساب کاربری شخصی، همیشه در دسترس است.</p>
+                <div style="background:#f1f5f9;padding:20px;border-radius:12px;">
+                    <span style="font-size:40px;">🔒</span>
+                    <h3>امن و شخصی</h3>
+                    <p style="color:#666;font-size:14px;">داده‌های تو فقط در اختیار خودت است</p>
                 </div>
             </div>
         </section>
 
         <!-- ===== ABOUT ===== -->
-        <section id="about" style="padding:40px 0;text-align:center;">
-            <h2 style="font-size:28px;margin-bottom:12px;color:var(--text);" data-key="about_title">💡 درباره‌ی ما</h2>
-            <p style="max-width:700px;margin:0 auto;color:var(--text-muted);line-height:1.9;font-size:16px;" data-key="about_text">
-                پیشرفت روزانه یک ابزار ساده و کاربردی برای ثبت و پیگیری عادت‌های روزانه است. 
-                هدف ما کمک به شما برای ساختن زندگی منظم‌تر، رسیدن به اهداف و مشاهده‌ی پیشرفت‌های کوچک اما مؤثر است. 
-                با ما همراه شوید و هر روز بهتر از دیروز باشید.
-            </p>
+        <section id="about" style="margin-top:48px;">
+            <h2>💡 درباره‌ی ما</h2>
+            <p style="max-width:700px;margin:0 auto;color:#666;line-height:1.9;">پیشرفت روزانه یک ابزار ساده و کاربردی برای ثبت و پیگیری عادت‌های روزانه است.</p>
         </section>
 
-        <!-- ===== AUTH ===== -->
+        <!-- ===== LOGIN ===== -->
         <div id="authBox" class="auth-box hidden">
-            <h2 data-key="auth_title">🔐 ورود / ثبت‌نام</h2>
+            <h2>🔐 ورود / ثبت‌نام</h2>
             <input type="text" id="loginUsername" placeholder="نام کاربری" />
             <input type="password" id="loginPassword" placeholder="رمز عبور" />
-            <button class="btn btn-primary" onclick="login()" data-key="login_btn">ورود</button>
-            <button class="btn btn-success" onclick="register()" data-key="register_btn">ثبت‌نام</button>
-            <button class="btn btn-outline" onclick="hideLogin()" data-key="cancel_btn">انصراف</button>
-            <div id="loginMessage" style="margin-top:12px;font-size:14px;color:#fb7185;text-align:center;"></div>
-            <div style="margin-top:12px;text-align:center;">
-                <button class="btn btn-sm btn-outline" onclick="showAdminLogin()" data-key="admin_btn">🔑 مدیریت</button>
+            <button class="btn btn-primary" onclick="login()">ورود</button>
+            <button class="btn btn-success" onclick="register()">ثبت‌نام</button>
+            <button class="btn btn-outline" onclick="hideLogin()">انصراف</button>
+            <div id="loginMessage" style="margin-top:12px;font-size:14px;color:#ef4444;"></div>
+            <div style="margin-top:12px;">
+                <button class="btn btn-outline" onclick="showAdminLogin()">🔑 مدیریت</button>
             </div>
         </div>
 
         <!-- ===== ADMIN LOGIN ===== -->
         <div id="adminLoginBox" class="auth-box hidden">
-            <h2 data-key="admin_title">🔑 پنل مدیریت</h2>
+            <h2>🔑 پنل مدیریت</h2>
             <input type="password" id="adminPassword" placeholder="رمز مدیریت" />
-            <button class="btn btn-primary" onclick="adminLogin()" data-key="admin_login_btn">ورود</button>
-            <button class="btn btn-outline" onclick="backToUserLogin()" data-key="back_btn">بازگشت</button>
-            <div id="adminLoginMessage" style="margin-top:12px;font-size:14px;color:#fb7185;text-align:center;"></div>
+            <button class="btn btn-primary" onclick="adminLogin()">ورود</button>
+            <button class="btn btn-outline" onclick="backToUserLogin()">بازگشت</button>
+            <div id="adminLoginMessage" style="margin-top:12px;font-size:14px;color:#ef4444;"></div>
         </div>
 
         <!-- ===== MAIN APP ===== -->
         <div id="appBox" class="hidden">
-            <div class="app-header">
-                <h2 data-key="app_title">📊 پیشرفت روزانه</h2>
-                <div class="user-badge">
-                    <span id="displayUser" style="color:var(--text-muted);">کاربر</span>
-                    <button class="btn btn-sm btn-danger" onclick="logout()" data-key="logout_btn">🚪 خروج</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
+                <h2>📊 پیشرفت روزانه</h2>
+                <div>
+                    <span id="displayUser" style="color:#666;">کاربر</span>
+                    <button class="btn btn-danger" onclick="logout()">🚪 خروج</button>
                 </div>
             </div>
-            <div style="text-align:center;color:var(--text-muted);font-size:14px;margin-bottom:12px;">
-                📅 <span id="currentDate"></span>
-            </div>
+            <div style="color:#666;font-size:14px;">📅 <span id="currentDate"></span></div>
             <div class="activities-grid" id="activitiesGrid"></div>
-            <div class="add-activity">
-                <input type="text" id="customActivityInput" placeholder="➕ فعالیت جدید..." />
-                <button class="btn btn-primary" onclick="addCustomActivity()" data-key="add_btn">افزودن</button>
+            <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
+                <input type="text" id="customActivityInput" placeholder="➕ فعالیت جدید..." style="flex:1;min-width:150px;" />
+                <button class="btn btn-primary" onclick="addCustomActivity()">افزودن</button>
             </div>
-            <button class="btn btn-success" style="width:100%;margin:10px 0;" onclick="saveDaily()" data-key="save_btn">💾 ذخیره امروز</button>
-            <div class="charts-row">
-                <div class="chart-box">
-                    <h3 data-key="daily_chart">📈 امروز</h3>
-                    <canvas id="dailyChart"></canvas>
-                </div>
-                <div class="chart-box">
-                    <h3 data-key="weekly_chart">📊 این هفته</h3>
-                    <canvas id="weeklyChart"></canvas>
-                </div>
+            <button class="btn btn-success" style="width:100%;margin:8px 0;" onclick="saveDaily()">💾 ذخیره امروز</button>
+            <div class="chart-container">
+                <h3>📈 امروز</h3>
+                <canvas id="dailyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>📊 این هفته</h3>
+                <canvas id="weeklyChart"></canvas>
             </div>
         </div>
 
         <!-- ===== ADMIN PANEL ===== -->
         <div id="adminPanel" class="hidden">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-                <h2 data-key="admin_panel_title">🔐 مدیریت</h2>
-                <button class="btn btn-sm btn-danger" onclick="backToUserLogin()" data-key="admin_exit_btn">🚪 خروج از مدیریت</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                <h2>🔐 مدیریت</h2>
+                <button class="btn btn-danger" onclick="backToUserLogin()">🚪 خروج از مدیریت</button>
             </div>
             <div id="adminTableContainer"></div>
         </div>
@@ -835,218 +308,7 @@
 
     <script>
         // ==============================================
-        //  GOOGLE SHEETS CONFIG
-        // ==============================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXCve29A1wIfLzWiJwhHcTMsk55KiYIKIAZgiGisgQVgiBnyfOoonDLgZ-HOKV_GYP/exec";
-
-        // ==============================================
-        //  THEME SYSTEM
-        // ==============================================
-        function setTheme(theme) {
-            const body = document.body;
-            body.className = body.className
-                .split(' ')
-                .filter(c => !c.startsWith('theme-'))
-                .join(' ');
-            body.classList.add('theme-' + theme);
-
-            document.querySelectorAll('.theme-dot').forEach(dot => {
-                dot.classList.toggle('active', dot.classList.contains(theme));
-            });
-
-            localStorage.setItem('selectedTheme', theme);
-            document.querySelector('.spinner').style.borderTopColor = getComputedStyle(document.documentElement)
-                .getPropertyValue('--primary').trim() || '#f472b6';
-            updateGlowColor(theme);
-            setTimeout(updateCharts, 100);
-        }
-
-        function updateGlowColor(theme) {
-            const glow = document.getElementById('glow');
-            const colors = {
-                pink: 'rgba(244, 114, 182, 0.25)',
-                blue: 'rgba(96, 165, 250, 0.25)',
-                green: 'rgba(52, 211, 153, 0.25)',
-                purple: 'rgba(167, 139, 250, 0.25)',
-                yellow: 'rgba(252, 211, 77, 0.25)',
-                white: 'rgba(148, 163, 184, 0.15)',
-                'dark-pastel': 'rgba(129, 140, 248, 0.25)'
-            };
-            glow.style.background = `radial-gradient(circle, ${colors[theme] || colors.pink} 0%, transparent 70%)`;
-        }
-
-        const savedTheme = localStorage.getItem('selectedTheme') || 'pink';
-        setTheme(savedTheme);
-
-        // ==============================================
-        //  CURSOR GLOW
-        // ==============================================
-        const glow = document.getElementById('glow');
-        let glowTimeout;
-
-        document.addEventListener('mousemove', (e) => {
-            const x = e.clientX;
-            const y = e.clientY;
-            glow.style.left = x + 'px';
-            glow.style.top = y + 'px';
-            glow.style.opacity = '1';
-            clearTimeout(glowTimeout);
-            glowTimeout = setTimeout(() => {
-                glow.style.opacity = '0';
-            }, 300);
-        });
-
-        document.addEventListener('mouseleave', () => {
-            glow.style.opacity = '0';
-        });
-
-        // ==============================================
-        //  SMOOTH SCROLL
-        // ==============================================
-        function smoothScroll(id) {
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // ==============================================
-        //  LANGUAGE TRANSLATIONS
-        // ==============================================
-        const translations = {
-            fa: {
-                logo: '✨ پیشرفت روزانه',
-                nav_home: 'خانه',
-                nav_features: 'ویژگی‌ها',
-                nav_about: 'درباره',
-                login_btn: 'ورود / ثبت‌نام',
-                hero_title: '🚀 به پیشرفت روزانه خوش آمدید',
-                hero_desc: 'فعالیت‌های روزانه‌ات را ثبت کن، پیشرفت‌ت را ببین و به اهداف‌ت برس! با رنگ‌های شاد و محیطی دوست‌داشتنی.',
-                hero_start: 'شروع کن',
-                hero_features: 'بیشتر بدان',
-                features_title: '✨ چرا پیشرفت روزانه؟',
-                features_desc: 'ابزاری ساده برای ثبت عادت‌ها، مشاهده‌ی پیشرفت و ساختن فردایی بهتر',
-                f1_title: '📊 ثبت آسان',
-                f1_desc: 'فعالیت‌های روزانه را با یک کلیک ثبت کن و پیشرفت خود را ببین.',
-                f2_title: '📈 نمودارهای پیشرفت',
-                f2_desc: 'نمودارهای روزانه و هفتگی به تو نشان می‌دهند چقدر به اهدافت نزدیک شده‌ای.',
-                f3_title: '🎨 طراحی دوست‌داشتنی',
-                f3_desc: 'رنگ‌های شاد و محیطی آرامش‌بخش که هر روز به تو انگیزه می‌دهد.',
-                f4_title: '🔒 امن و شخصی',
-                f4_desc: 'داده‌های تو فقط در اختیار خودت است. با حساب کاربری شخصی، همیشه در دسترس است.',
-                about_title: '💡 درباره‌ی ما',
-                about_text: 'پیشرفت روزانه یک ابزار ساده و کاربردی برای ثبت و پیگیری عادت‌های روزانه است. هدف ما کمک به شما برای ساختن زندگی منظم‌تر، رسیدن به اهداف و مشاهده‌ی پیشرفت‌های کوچک اما مؤثر است. با ما همراه شوید و هر روز بهتر از دیروز باشید.',
-                auth_title: '🔐 ورود / ثبت‌نام',
-                register_btn: 'ثبت‌نام',
-                cancel_btn: 'انصراف',
-                admin_btn: '🔑 مدیریت',
-                admin_title: '🔑 پنل مدیریت',
-                admin_login_btn: 'ورود',
-                back_btn: 'بازگشت',
-                app_title: '📊 پیشرفت روزانه',
-                logout_btn: '🚪 خروج',
-                add_btn: 'افزودن',
-                save_btn: '💾 ذخیره امروز',
-                daily_chart: '📈 امروز',
-                weekly_chart: '📊 این هفته',
-                admin_panel_title: '🔐 مدیریت',
-                admin_exit_btn: '🚪 خروج از مدیریت',
-                loading: '⏳ لطفاً صبر کنید...',
-                edit_btn: '✏️ ویرایش',
-                delete_btn: '🗑️ حذف',
-            },
-            en: {
-                logo: '✨ Daily Progress',
-                nav_home: 'Home',
-                nav_features: 'Features',
-                nav_about: 'About',
-                login_btn: 'Login / Register',
-                hero_title: '🚀 Welcome to Daily Progress',
-                hero_desc: 'Track your daily activities, see your progress and reach your goals! With cheerful colors and a friendly environment.',
-                hero_start: 'Get Started',
-                hero_features: 'Learn More',
-                features_title: '✨ Why Daily Progress?',
-                features_desc: 'A simple tool to track habits, see progress and build a better tomorrow',
-                f1_title: '📊 Easy Tracking',
-                f1_desc: 'Log your daily activities with one click and see your progress.',
-                f2_title: '📈 Progress Charts',
-                f2_desc: 'Daily and weekly charts show you how close you are to your goals.',
-                f3_title: '🎨 Friendly Design',
-                f3_desc: 'Cheerful colors and a calming environment that motivates you every day.',
-                f4_title: '🔒 Secure & Personal',
-                f4_desc: 'Your data is only accessible to you. With a personal account, it\'s always available.',
-                about_title: '💡 About Us',
-                about_text: 'Daily Progress is a simple and practical tool for tracking daily habits. Our goal is to help you build a more organized life, achieve your goals, and see the small but effective steps of progress. Join us and become better every day.',
-                auth_title: '🔐 Login / Register',
-                register_btn: 'Register',
-                cancel_btn: 'Cancel',
-                admin_btn: '🔑 Admin',
-                admin_title: '🔑 Admin Panel',
-                admin_login_btn: 'Login',
-                back_btn: 'Back',
-                app_title: '📊 Daily Progress',
-                logout_btn: '🚪 Logout',
-                add_btn: 'Add',
-                save_btn: '💾 Save Today',
-                daily_chart: '📈 Today',
-                weekly_chart: '📊 This Week',
-                admin_panel_title: '🔐 Admin Panel',
-                admin_exit_btn: '🚪 Exit Admin',
-                loading: '⏳ Please wait...',
-                edit_btn: '✏️ Edit',
-                delete_btn: '🗑️ Delete',
-            }
-        };
-
-        let currentLang = 'fa';
-
-        // ==============================================
-        //  LANGUAGE FUNCTION
-        // ==============================================
-        function toggleLang() {
-            if (currentLang === 'fa') {
-                currentLang = 'en';
-                document.documentElement.lang = 'en';
-                document.documentElement.dir = 'ltr';
-                document.getElementById('langToggle').textContent = '🇮🇷 FA';
-            } else {
-                currentLang = 'fa';
-                document.documentElement.lang = 'fa';
-                document.documentElement.dir = 'rtl';
-                document.getElementById('langToggle').textContent = '🇬🇧 EN';
-            }
-            translatePage();
-        }
-
-        function translatePage() {
-            document.querySelectorAll('[data-key]').forEach(el => {
-                const key = el.getAttribute('data-key');
-                if (translations[currentLang] && translations[currentLang][key]) {
-                    el.textContent = translations[currentLang][key];
-                }
-            });
-        }
-
-        // ==============================================
-        //  AUTH UI FUNCTIONS
-        // ==============================================
-        function showLogin() {
-            document.getElementById('authBox').classList.remove('hidden');
-            document.querySelector('.hero').style.display = 'none';
-        }
-
-        function hideLogin() {
-            document.getElementById('authBox').classList.add('hidden');
-            document.querySelector('.hero').style.display = 'block';
-        }
-
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-
-        // ==============================================
-        //  APP LOGIC (با Google Sheets)
+        //  DATA
         // ==============================================
         const PRESET_ACTIVITIES = [
             { id: 'sport', icon: '🏋️', name: 'ورزش' },
@@ -1062,40 +324,140 @@
         let currentUser = null;
         let isAdmin = false;
         let editingIndex = null;
+        let currentLang = 'fa';
 
         // ==============================================
-        //  Google Sheets Functions
+        //  USERS (localStorage)
         // ==============================================
-        async function syncWithSheet(action, data) {
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, ...data })
-                });
-                const result = await response.json();
-                return result;
-            } catch (e) {
-                console.error('❌ Error syncing with Google Sheets:', e);
-                return { success: false, error: e.message };
+        function getUsers() {
+            return JSON.parse(localStorage.getItem('dailyUsers') || '{}');
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem('dailyUsers', JSON.stringify(users));
+        }
+
+        // ==============================================
+        //  LANGUAGE
+        // ==============================================
+        function toggleLang() {
+            const btn = document.getElementById('langToggle');
+            if (currentLang === 'fa') {
+                currentLang = 'en';
+                document.documentElement.lang = 'en';
+                document.documentElement.dir = 'ltr';
+                btn.textContent = '🇮🇷 FA';
+                translatePage('en');
+            } else {
+                currentLang = 'fa';
+                document.documentElement.lang = 'fa';
+                document.documentElement.dir = 'rtl';
+                btn.textContent = '🇬🇧 EN';
+                translatePage('fa');
             }
         }
 
-        async function loadFromSheet() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const result = await response.json();
-                return result.users || {};
-            } catch (e) {
-                console.error('❌ Error loading from Google Sheets:', e);
-                return {};
-            }
+        function translatePage(lang) {
+            const translations = {
+                fa: {
+                    'nav_home': 'خانه',
+                    'nav_features': 'ویژگی‌ها',
+                    'nav_about': 'درباره',
+                    'hero_title': '🚀 به پیشرفت روزانه خوش آمدید',
+                    'hero_desc': 'فعالیت‌های روزانه‌ات را ثبت کن، پیشرفت‌ت را ببین و به اهداف‌ت برس!',
+                    'hero_start': 'شروع کن',
+                    'hero_more': 'بیشتر بدان',
+                    'features_title': '✨ چرا پیشرفت روزانه؟',
+                    'about_title': '💡 درباره‌ی ما',
+                    'about_text': 'پیشرفت روزانه یک ابزار ساده و کاربردی برای ثبت و پیگیری عادت‌های روزانه است.',
+                    'login_btn': 'ورود / ثبت‌نام',
+                    'auth_title': '🔐 ورود / ثبت‌نام',
+                    'register_btn': 'ثبت‌نام',
+                    'cancel_btn': 'انصراف',
+                    'admin_btn': '🔑 مدیریت',
+                    'admin_title': '🔑 پنل مدیریت',
+                    'admin_login_btn': 'ورود',
+                    'back_btn': 'بازگشت',
+                    'app_title': '📊 پیشرفت روزانه',
+                    'logout_btn': '🚪 خروج',
+                    'add_btn': 'افزودن',
+                    'save_btn': '💾 ذخیره امروز',
+                    'daily_chart': '📈 امروز',
+                    'weekly_chart': '📊 این هفته',
+                    'edit_btn': '✏️ ویرایش',
+                    'delete_btn': '🗑️ حذف',
+                    'loading': '⏳ لطفاً صبر کنید...'
+                },
+                en: {
+                    'nav_home': 'Home',
+                    'nav_features': 'Features',
+                    'nav_about': 'About',
+                    'hero_title': '🚀 Welcome to Daily Progress',
+                    'hero_desc': 'Track your daily activities, see your progress and reach your goals!',
+                    'hero_start': 'Get Started',
+                    'hero_more': 'Learn More',
+                    'features_title': '✨ Why Daily Progress?',
+                    'about_title': '💡 About Us',
+                    'about_text': 'Daily Progress is a simple and practical tool for tracking daily habits.',
+                    'login_btn': 'Login / Register',
+                    'auth_title': '🔐 Login / Register',
+                    'register_btn': 'Register',
+                    'cancel_btn': 'Cancel',
+                    'admin_btn': '🔑 Admin',
+                    'admin_title': '🔑 Admin Panel',
+                    'admin_login_btn': 'Login',
+                    'back_btn': 'Back',
+                    'app_title': '📊 Daily Progress',
+                    'logout_btn': '🚪 Logout',
+                    'add_btn': 'Add',
+                    'save_btn': '💾 Save Today',
+                    'daily_chart': '📈 Today',
+                    'weekly_chart': '📊 This Week',
+                    'edit_btn': '✏️ Edit',
+                    'delete_btn': '🗑️ Delete',
+                    'loading': '⏳ Please wait...'
+                }
+            };
+
+            const t = translations[lang] || translations.fa;
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (t[key] !== undefined) el.textContent = t[key];
+            });
+        }
+
+        // ==============================================
+        //  SMOOTH SCROLL
+        // ==============================================
+        function smoothScroll(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ==============================================
+        //  AUTH UI
+        // ==============================================
+        function showLogin() {
+            document.getElementById('authBox').classList.remove('hidden');
+            document.querySelector('.container').style.opacity = '0.5';
+        }
+
+        function hideLogin() {
+            document.getElementById('authBox').classList.add('hidden');
+            document.querySelector('.container').style.opacity = '1';
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
         // ==============================================
         //  AUTH FUNCTIONS
         // ==============================================
-        async function login() {
+        function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             const msg = document.getElementById('loginMessage');
@@ -1106,14 +468,13 @@
                 return;
             }
             showLoading();
-            const users = await loadFromSheet();
             setTimeout(() => {
+                const users = getUsers();
                 if (users[username] && users[username].password === password) {
                     currentUser = username;
                     activities = users[username].activities || PRESET_ACTIVITIES.map(a => ({ ...a }));
                     dailyCounts = users[username].dailyCounts || {};
-                    document.getElementById('authBox').classList.add('hidden');
-                    document.querySelector('.hero').style.display = 'none';
+                    hideLogin();
                     document.getElementById('appBox').classList.remove('hidden');
                     document.getElementById('displayUser').textContent = username;
                     document.getElementById('loginNavBtn').classList.add('hidden');
@@ -1127,7 +488,7 @@
             }, 800);
         }
 
-        async function register() {
+        function register() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             const msg = document.getElementById('loginMessage');
@@ -1143,50 +504,49 @@
                 return;
             }
             showLoading();
-            const users = await loadFromSheet();
-            if (users[username]) {
-                msg.textContent = currentLang === 'fa' ? 'این نام کاربری قبلاً ثبت شده است.' :
-                    'This username already exists.';
-                hideLoading();
-                return;
-            }
-            const result = await syncWithSheet('register', {
-                username,
-                password,
-                activities: PRESET_ACTIVITIES.map(a => ({ ...a })),
-                dailyCounts: {}
-            });
-            if (result.success) {
+            setTimeout(() => {
+                const users = getUsers();
+                if (users[username]) {
+                    msg.textContent = currentLang === 'fa' ? 'این نام کاربری قبلاً ثبت شده است.' :
+                        'This username already exists.';
+                    hideLoading();
+                    return;
+                }
+                users[username] = {
+                    password,
+                    activities: PRESET_ACTIVITIES.map(a => ({ ...a })),
+                    dailyCounts: {}
+                };
+                saveUsers(users);
                 msg.textContent = currentLang === 'fa' ? '✅ ثبت‌نام موفق! حالا وارد شوید.' :
                     '✅ Registration successful! Now login.';
-                msg.style.color = '#34d399';
-                setTimeout(() => { msg.style.color = '#fb7185'; }, 3000);
-            } else {
-                msg.textContent = currentLang === 'fa' ? '❌ ثبت‌نام ناموفق. دوباره تلاش کن.' :
-                    '❌ Registration failed. Try again.';
-            }
-            hideLoading();
+                msg.style.color = '#22c55e';
+                setTimeout(() => { msg.style.color = '#ef4444'; }, 3000);
+                hideLoading();
+            }, 800);
         }
 
-        async function logout() {
-            if (currentUser) {
-                await syncWithSheet('update', {
-                    username: currentUser,
-                    password: 'dummy',
-                    activities: activities,
-                    dailyCounts: dailyCounts,
-                    lastActivity: new Date().toLocaleString('fa-IR')
-                });
-            }
+        function logout() {
+            saveUserData();
             currentUser = null;
             activities = [];
             dailyCounts = {};
             document.getElementById('appBox').classList.add('hidden');
             document.getElementById('adminPanel').classList.add('hidden');
-            document.querySelector('.hero').style.display = 'block';
             document.getElementById('loginNavBtn').classList.remove('hidden');
+            document.querySelector('.container').style.opacity = '1';
             isAdmin = false;
-            renderApp();
+        }
+
+        function saveUserData() {
+            if (!currentUser) return;
+            const users = getUsers();
+            if (users[currentUser]) {
+                users[currentUser].activities = activities;
+                users[currentUser].dailyCounts = dailyCounts;
+                users[currentUser].lastActivity = new Date().toLocaleString('fa-IR');
+                saveUsers(users);
+            }
         }
 
         // ==============================================
@@ -1202,9 +562,10 @@
             document.getElementById('adminPanel').classList.add('hidden');
             document.getElementById('authBox').classList.remove('hidden');
             isAdmin = false;
+            document.querySelector('.container').style.opacity = '1';
         }
 
-        async function adminLogin() {
+        function adminLogin() {
             const password = document.getElementById('adminPassword').value;
             const msg = document.getElementById('adminLoginMessage');
             if (password === '0101') {
@@ -1212,61 +573,45 @@
                 document.getElementById('adminLoginBox').classList.add('hidden');
                 document.getElementById('appBox').classList.add('hidden');
                 document.getElementById('authBox').classList.add('hidden');
-                document.querySelector('.hero').style.display = 'none';
                 document.getElementById('adminPanel').classList.remove('hidden');
                 msg.textContent = '';
-                await renderAdminPanel();
+                renderAdminPanel();
+                document.querySelector('.container').style.opacity = '1';
             } else {
                 msg.textContent = currentLang === 'fa' ? '❌ رمز مدیریت اشتباه است.' :
                     '❌ Admin password is incorrect.';
             }
         }
 
-        async function renderAdminPanel() {
+        function renderAdminPanel() {
             const container = document.getElementById('adminTableContainer');
-            const users = await loadFromSheet();
+            const users = getUsers();
             const usernames = Object.keys(users);
-
             if (usernames.length === 0) {
-                container.innerHTML = `<p style="color:var(--text-muted);">${currentLang === 'fa' ? 'هیچ کاربری ثبت نشده است.' : 'No users registered.'}</p>`;
+                container.innerHTML = `<p style="color:#666;">${currentLang === 'fa' ? 'هیچ کاربری ثبت نشده است.' : 'No users registered.'}</p>`;
                 return;
             }
-
             let html = `
                 <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>${currentLang === 'fa' ? 'کاربر' : 'User'}</th>
-                            <th>${currentLang === 'fa' ? 'فعالیت‌ها' : 'Activities'}</th>
-                            <th>${currentLang === 'fa' ? 'پیشرفت امروز' : 'Today\'s Progress'}</th>
-                            <th>${currentLang === 'fa' ? 'آخرین فعالیت' : 'Last Activity'}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                    <thead><tr>
+                        <th>#</th>
+                        <th>${currentLang === 'fa' ? 'کاربر' : 'User'}</th>
+                        <th>${currentLang === 'fa' ? 'فعالیت‌ها' : 'Activities'}</th>
+                        <th>${currentLang === 'fa' ? 'آخرین فعالیت' : 'Last Activity'}</th>
+                    </tr></thead><tbody>
             `;
-
             usernames.forEach((user, i) => {
-                const userData = users[user];
-                const acts = userData.activities || [];
-                const dailyCounts = userData.dailyCounts || {};
-                const todayKey = new Date().toISOString().split('T')[0];
-                const todayData = dailyCounts[todayKey] || {};
-                const todayProgress = acts.map(a => `${a.name}: ${todayData[a.id] || 0}`).join(', ');
-                const lastActivity = userData.lastActivity || 'نامشخص';
-                html += `
-                    <tr>
-                        <td>${i+1}</td>
-                        <td>${user}</td>
-                        <td>${acts.map(a => a.name).join(', ')}</td>
-                        <td>${todayProgress || '—'}</td>
-                        <td>${lastActivity}</td>
-                    </tr>
-                `;
+                const acts = users[user].activities || [];
+                const last = users[user].lastActivity || 'نامشخص';
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td>${user}</td>
+                    <td>${acts.map(a => a.name).join(', ')}</td>
+                    <td>${last}</td>
+                </tr>`;
             });
-
             html += `</tbody></table>
-                <p style="color:var(--text-muted);margin-top:12px;">${currentLang === 'fa' ? '📊 تعداد کل کاربران:' : '📊 Total users:'} ${usernames.length}</p>
+                <p style="color:#666;margin-top:12px;">${currentLang === 'fa' ? '📊 تعداد کل کاربران:' : '📊 Total users:'} ${usernames.length}</p>
             `;
             container.innerHTML = html;
         }
@@ -1274,11 +619,11 @@
         // ==============================================
         //  ACTIVITIES FUNCTIONS
         // ==============================================
-        async function deleteActivity(index) {
+        function deleteActivity(index) {
             if (confirm(currentLang === 'fa' ? 'آیا از حذف این فعالیت مطمئن هستید؟' :
                     'Are you sure you want to delete this activity?')) {
                 activities.splice(index, 1);
-                await saveUserData();
+                saveUserData();
                 renderApp();
             }
         }
@@ -1294,13 +639,13 @@
                 if (newIcon && newIcon.trim()) {
                     act.icon = newIcon.trim();
                 }
-                await saveUserData();
+                saveUserData();
                 renderApp();
             }
             editingIndex = null;
         }
 
-        async function addCustomActivity() {
+        function addCustomActivity() {
             const input = document.getElementById('customActivityInput');
             const name = input.value.trim();
             if (!name) return;
@@ -1310,20 +655,9 @@
                 name: name
             };
             activities.push(newAct);
-            await saveUserData();
+            saveUserData();
             input.value = '';
             renderApp();
-        }
-
-        async function saveUserData() {
-            if (!currentUser) return;
-            await syncWithSheet('update', {
-                username: currentUser,
-                password: 'dummy',
-                activities: activities,
-                dailyCounts: dailyCounts,
-                lastActivity: new Date().toLocaleString('fa-IR')
-            });
         }
 
         // ==============================================
@@ -1342,15 +676,13 @@
                 const count = dailyCounts[todayKey]?.[act.id] || 0;
                 if (count > 0) div.classList.add('done');
 
-                const nameDisplay = act.name.length > 12 ? act.name.slice(0, 10) + '...' : act.name;
-
                 div.innerHTML = `
-                    <span class="icon">${act.icon}</span>
-                    <div class="act-name">${nameDisplay}</div>
-                    <div class="act-count">✅ ${count} ${currentLang === 'fa' ? 'بار' : 'times'}</div>
-                    <div class="act-actions">
-                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); startEdit(${index})" data-key="edit_btn">✏️</button>
-                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteActivity(${index})" data-key="delete_btn">🗑️</button>
+                    <span style="font-size:24px;">${act.icon}</span>
+                    <div style="font-weight:600;">${act.name}</div>
+                    <div style="font-size:12px;color:#666;">✅ ${count} ${currentLang === 'fa' ? 'بار' : 'times'}</div>
+                    <div style="margin-top:6px;">
+                        <button class="btn btn-primary" style="padding:2px 10px;font-size:10px;" onclick="event.stopPropagation(); startEdit(${index})">✏️</button>
+                        <button class="btn btn-danger" style="padding:2px 10px;font-size:10px;" onclick="event.stopPropagation(); deleteActivity(${index})">🗑️</button>
                     </div>
                 `;
                 div.onclick = () => {
@@ -1363,11 +695,14 @@
             updateCharts();
         }
 
-        async function saveDaily() {
-            await saveUserData();
+        function saveDaily() {
+            saveUserData();
             alert(currentLang === 'fa' ? '✅ فعالیت‌های امروز ذخیره شد!' : '✅ Today\'s activities saved!');
         }
 
+        // ==============================================
+        //  CHARTS
+        // ==============================================
         function updateCharts() {
             const todayKey = new Date().toISOString().split('T')[0];
             const todayData = dailyCounts[todayKey] || {};
@@ -1380,8 +715,7 @@
                     datasets: [{
                         label: currentLang === 'fa' ? 'امروز' : 'Today',
                         data: activities.map(a => todayData[a.id] || 0),
-                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() ||
-                            '#f472b6',
+                        backgroundColor: '#6366f1',
                         borderRadius: 8,
                     }]
                 },
@@ -1413,10 +747,8 @@
                     datasets: [{
                         label: currentLang === 'fa' ? 'مجموع فعالیت‌ها' : 'Total Activities',
                         data: weekTotals,
-                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() ||
-                            '#f472b6',
-                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() +
-                            '33' || '#f472b633',
+                        borderColor: '#22d3ee',
+                        backgroundColor: 'rgba(34,211,238,0.1)',
                         fill: true,
                         tension: 0.3,
                         pointRadius: 5,
@@ -1433,8 +765,8 @@
         // ==============================================
         //  START
         // ==============================================
-        translatePage();
         renderApp();
+        translatePage('fa');
     </script>
 
 </body>
