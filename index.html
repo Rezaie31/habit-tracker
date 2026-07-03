@@ -1014,7 +1014,7 @@
         }
 
         // ==============================================
-        //  APP LOGIC (با Google Sheets)
+        //  APP LOGIC (با Google Sheets و fetch معمولی)
         // ==============================================
         const PRESET_ACTIVITIES = [
             { id: 'sport', icon: '🏋️', name: 'ورزش' },
@@ -1032,17 +1032,17 @@
         let editingIndex = null;
 
         // ==============================================
-        //  Google Sheets Functions
+        //  Google Sheets Functions (با دریافت پاسخ)
         // ==============================================
         async function syncWithSheet(action, data) {
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action, ...data })
                 });
-                return { success: true };
+                const result = await response.json();
+                return result;
             } catch (e) {
                 console.error('❌ Error syncing with Google Sheets:', e);
                 return { success: false, error: e.message };
@@ -1061,7 +1061,7 @@
         }
 
         // ==============================================
-        //  AUTH FUNCTIONS (با Google Sheets)
+        //  AUTH FUNCTIONS (اصلاح‌شده)
         // ==============================================
         async function login() {
             const username = document.getElementById('loginUsername').value.trim();
@@ -1084,7 +1084,6 @@
                     document.querySelector('.hero').style.display = 'none';
                     document.getElementById('appBox').classList.remove('hidden');
                     document.getElementById('displayUser').textContent = username;
-                    // حذف دکمه ورود/ثبت‌نام از نوار
                     document.getElementById('loginNavBtn').classList.add('hidden');
                     msg.textContent = '';
                     renderApp();
@@ -1119,7 +1118,12 @@
                 hideLoading();
                 return;
             }
-            const result = await syncWithSheet('register', { username, password, activities: PRESET_ACTIVITIES.map(a => ({ ...a })), dailyCounts: {} });
+            const result = await syncWithSheet('register', {
+                username,
+                password,
+                activities: PRESET_ACTIVITIES.map(a => ({ ...a })),
+                dailyCounts: {}
+            });
             if (result.success) {
                 msg.textContent = currentLang === 'en' ? '✅ Registration successful! Now login.' :
                     '✅ ثبت‌نام موفق! حالا وارد شوید.';
