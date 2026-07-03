@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ===== RESET & VARIABLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --accent: #6366f1;
+            --accent2: #22d3ee;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --transition: 0.3s ease;
+        }
+        body.dark {
+            --bg: #0a0f1f;
+            --card: #111a2e;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        body {
+            font-family: 'Vazirmatn', 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card);
+            padding: 28px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .hidden {
+            display: none !important;
+        }
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 13px;
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+        .btn-danger {
+            background: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-success {
+            background: #22c55e;
+        }
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        /* ===== LOGIN ===== */
+        #loginBox {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        #loginBox h2 {
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        #loginBox input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            border-radius: 30px;
+            border: 2px solid var(--muted);
+            background: var(--bg);
+            color: var(--text);
+            margin-bottom: 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+        #loginBox .btn {
+            padding: 12px 32px;
+            font-size: 16px;
+        }
+        /* ===== HABITS ===== */
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .form-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 30px;
+            border: 2px solid var(--muted);
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: var(--transition);
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .form-row input:focus {
+            border-color: var(--accent);
+        }
+        .habit-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: var(--transition);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .habit-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .habit-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .habit-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .habit-stats {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .habit-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .habit-check {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+        /* ===== CHART ===== */
+        .chart-container {
+            margin-top: 28px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: var(--radius);
+        }
+        .chart-container h3 {
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        canvas {
+            max-height: 200px;
+            width: 100% !important;
+        }
+        /* ===== ADMIN PANEL ===== */
+        #adminPanel {
+            margin-top: 24px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: var(--radius);
+        }
+        #adminPanel table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        #adminPanel th,
+        #adminPanel td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--muted);
+            text-align: center;
+        }
+        #adminPanel th {
+            background: var(--accent);
+            color: #fff;
+        }
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px;
+            }
+            .habit-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .habit-actions {
+                justify-content: flex-start;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .form-row input {
+                width: 100%;
+            }
+            #adminPanel table {
+                font-size: 11px;
+            }
+            #adminPanel th,
+            #adminPanel td {
+                padding: 4px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ===== LOGIN ===== -->
+        <div id="loginBox">
+            <h2 data-key="login_title">🔐 ورود / ثبت‌نام</h2>
+            <p style="color:var(--muted);margin-bottom:16px;" data-key="login_sub">نام کاربری و رمز عبور خود را وارد کنید.</p>
+            <input type="text" id="loginUsername" placeholder="نام کاربری" />
+            <input type="password" id="loginPassword" placeholder="رمز عبور" />
+            <button class="btn" onclick="login()" data-key="login_btn">ورود</button>
+            <button class="btn btn-success" onclick="register()" style="margin-right:8px;" data-key="register_btn">ثبت‌نام</button>
+            <div id="loginMessage" style="margin-top:12px;font-size:14px;"></div>
+            <div style="margin-top:16px;">
+                <button class="btn btn-outline" onclick="showAdminLogin()" data-key="admin_login_btn">🔑 ورود مدیریت</button>
+            </div>
+        </div>
+
+        <!-- ===== ADMIN LOGIN ===== -->
+        <div id="adminLoginBox" class="hidden">
+            <h2 style="color:var(--accent);" data-key="admin_title">🔑 ورود به پنل مدیریت</h2>
+            <p style="color:var(--muted);margin-bottom:16px;" data-key="admin_sub">رمز پنل مدیریت را وارد کنید.</p>
+            <input type="password" id="adminPassword" placeholder="رمز مدیریت" style="width:100%;max-width:300px;padding:12px;border-radius:30px;border:2px solid var(--muted);background:var(--bg);color:var(--text);margin-bottom:12px;font-size:16px;text-align:center;" />
+            <button class="btn" onclick="adminLogin()" data-key="admin_login_btn2">ورود به پنل</button>
+            <button class="btn btn-outline" onclick="backToUserLogin()" data-key="back_btn">بازگشت</button>
+            <div id="adminLoginMessage" style="margin-top:12px;font-size:14px;"></div>
+        </div>
+
+        <!-- ===== MAIN APP ===== -->
+        <div id="appBox" class="hidden">
+
+            <!-- HEADER -->
+            <div class="header">
+                <h1 data-key="app_title">📊 پیگیری عادت‌ها</h1>
+                <div class="user-info">
+                    <span id="displayUser">کاربر</span>
+                    <button class="btn btn-outline" onclick="logout()" data-key="logout_btn">🚪 خروج</button>
+                    <button class="btn btn-outline" onclick="toggleTheme()" data-key="theme_btn">🌙 تم</button>
+                    <button class="btn btn-outline" onclick="toggleLang()" data-key="lang_btn">🇬🇧 EN</button>
+                </div>
+            </div>
+
+            <!-- FORM -->
+            <div class="form-row">
+                <input type="text" id="habitInput" placeholder="مثلاً: ورزش روزانه" />
+                <button class="btn" onclick="addHabit()" data-key="add_btn">➕ افزودن عادت</button>
+            </div>
+
+            <!-- LIST -->
+            <div id="habitList"></div>
+
+            <!-- CHART -->
+            <div class="chart-container">
+                <h3 data-key="chart_title">📈 پیشرفت هفتگی</h3>
+                <canvas id="progressChart"></canvas>
+            </div>
+
+        </div>
+
+        <!-- ===== ADMIN PANEL ===== -->
+        <div id="adminPanel" class="hidden">
+            <div class="header">
+                <h1 data-key="admin_panel_title">🔐 پنل مدیریت</h1>
+                <button class="btn btn-outline" onclick="backToUserLogin()" data-key="admin_exit_btn">🚪 خروج از مدیریت</button>
+            </div>
+            <div id="adminContent">
+                <p style="color:var(--muted);margin-bottom:12px;" data-key="admin_stats">📊 لیست کاربران و عادت‌های آنها</p>
+                <div id="adminTableContainer"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==============================================
+        //  تنظیمات Google Sheets (لینک شما)
+        // ==============================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXCve29A1wIfLzWiJwhHcTMsk55KiYIKIAZgiGisgQVgiBnyfOoonDLgZ-HOKV_GYP/exec";
+
+        // ==============================================
+        //  ترجمه‌ها
+        // ==============================================
+        const translations = {
+            fa: {
+                'login_title': '🔐 ورود / ثبت‌نام',
+                'login_sub': 'نام کاربری و رمز عبور خود را وارد کنید.',
+                'login_btn': 'ورود',
+                'register_btn': 'ثبت‌نام',
+                'admin_login_btn': '🔑 ورود مدیریت',
+                'admin_title': '🔑 ورود به پنل مدیریت',
+                'admin_sub': 'رمز پنل مدیریت را وارد کنید.',
+                'admin_login_btn2': 'ورود به پنل',
+                'back_btn': 'بازگشت',
+                'app_title': '📊 پیگیری عادت‌ها',
+                'logout_btn': '🚪 خروج',
+                'theme_btn': '🌙 تم',
+                'lang_btn': '🇬🇧 EN',
+                'add_btn': '➕ افزودن عادت',
+                'chart_title': '📈 پیشرفت هفتگی',
+                'admin_panel_title': '🔐 پنل مدیریت',
+                'admin_exit_btn': '🚪 خروج از مدیریت',
+                'admin_stats': '📊 لیست کاربران و عادت‌های آنها',
+                'no_habits': 'هنوز عادتی ثبت نشده است.',
+                'no_users': 'هیچ کاربری ثبت نشده است.',
+                'total_users': 'تعداد کل کاربران:',
+                'username': 'نام کاربری',
+                'habits_count': 'تعداد عادت‌ها',
+                'last_activity': 'آخرین فعالیت',
+            },
+            en: {
+                'login_title': '🔐 Login / Register',
+                'login_sub': 'Enter your username and password.',
+                'login_btn': 'Login',
+                'register_btn': 'Register',
+                'admin_login_btn': '🔑 Admin Login',
+                'admin_title': '🔑 Admin Panel Login',
+                'admin_sub': 'Enter admin password.',
+                'admin_login_btn2': 'Enter Panel',
+                'back_btn': 'Back',
+                'app_title': '📊 Habit Tracker',
+                'logout_btn': '🚪 Logout',
+                'theme_btn': '🌙 Theme',
+                'lang_btn': '🇮🇷 FA',
+                'add_btn': '➕ Add Habit',
+                'chart_title': '📈 Weekly Progress',
+                'admin_panel_title': '🔐 Admin Panel',
+                'admin_exit_btn': '🚪 Exit Admin',
+                'admin_stats': '📊 Users and their habits',
+                'no_habits': 'No habits registered yet.',
+                'no_users': 'No users registered.',
+                'total_users': 'Total users:',
+                'username': 'Username',
+                'habits_count': 'Habits Count',
+                'last_activity': 'Last Activity',
+            }
+        };
+
+        // ==============================================
+        //  وضعیت
+        // ==============================================
+        let currentLang = 'fa';
+        let habits = [];
+        let chartInstance = null;
+        let currentUser = null;
+        let isAdmin = false;
+
+        // ==============================================
+        //  توابع Google Sheets
+        // ==============================================
+        async function syncWithSheet(action, data) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...data })
+                });
+                // با no-cors نمی‌توانیم پاسخ بخوانیم، اما داده ارسال می‌شود.
+                return { success: true };
+            } catch (e) {
+                console.error('❌ خطا در ارتباط با Google Sheets:', e);
+                return { success: false, error: e.message };
+            }
+        }
+
+        async function loadFromSheet() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const result = await response.json();
+                return result.users || {};
+            } catch (e) {
+                console.error('❌ خطا در دریافت داده‌ها:', e);
+                return {};
+            }
+        }
+
+        // ==============================================
+        //  احراز هویت با Google Sheets
+        // ==============================================
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const msg = document.getElementById('loginMessage');
+
+            if (!username || !password) {
+                msg.textContent = currentLang === 'fa' ? 'لطفاً نام کاربری و رمز را وارد کنید.' : 'Please enter username and password.';
+                msg.style.color = '#ef4444';
+                return;
+            }
+
+            const users = await loadFromSheet();
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                habits = users[username].habits || [];
+                document.getElementById('loginBox').classList.add('hidden');
+                document.getElementById('appBox').classList.remove('hidden');
+                document.getElementById('displayUser').textContent = username;
+                msg.textContent = '';
+                render();
+            } else {
+                msg.textContent = currentLang === 'fa' ? 'نام کاربری یا رمز اشتباه است.' : 'Username or password is incorrect.';
+                msg.style.color = '#ef4444';
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const msg = document.getElementById('loginMessage');
+
+            if (!username || !password) {
+                msg.textContent = currentLang === 'fa' ? 'لطفاً نام کاربری و رمز را وارد کنید.' : 'Please enter username and password.';
+                msg.style.color = '#ef4444';
+                return;
+            }
+            if (password.length < 4) {
+                msg.textContent = currentLang === 'fa' ? 'رمز باید حداقل ۴ کاراکتر باشد.' : 'Password must be at least 4 characters.';
+                msg.style.color = '#ef4444';
+                return;
+            }
+
+            const users = await loadFromSheet();
+            if (users[username]) {
+                msg.textContent = currentLang === 'fa' ? 'این نام کاربری قبلاً ثبت شده است.' : 'This username already exists.';
+                msg.style.color = '#ef4444';
+                return;
+            }
+
+            const result = await syncWithSheet('register', { username, password, habits: [] });
+            if (result.success) {
+                msg.textContent = currentLang === 'fa' ? '✅ ثبت‌نام موفق! حالا وارد شوید.' : '✅ Registration successful! Now login.';
+                msg.style.color = '#22c55e';
+                setTimeout(() => { msg.textContent = ''; }, 3000);
+            } else {
+                msg.textContent = currentLang === 'fa' ? '❌ خطا در ثبت‌نام. دوباره تلاش کن.' : '❌ Registration error. Try again.';
+                msg.style.color = '#ef4444';
+            }
+        }
+
+        async function logout() {
+            if (currentUser) {
+                await syncWithSheet('update', { username: currentUser, password: 'dummy', habits });
+            }
+            currentUser = null;
+            habits = [];
+            document.getElementById('loginBox').classList.remove('hidden');
+            document.getElementById('appBox').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            isAdmin = false;
+            render();
+        }
+
+        // ==============================================
+        //  پنل مدیریت
+        // ==============================================
+        function showAdminLogin() {
+            document.getElementById('loginBox').classList.add('hidden');
+            document.getElementById('adminLoginBox').classList.remove('hidden');
+            translatePage();
+        }
+
+        function backToUserLogin() {
+            document.getElementById('adminLoginBox').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('loginBox').classList.remove('hidden');
+            isAdmin = false;
+            translatePage();
+        }
+
+        async function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            const msg = document.getElementById('adminLoginMessage');
+
+            if (password === '0101') {
+                isAdmin = true;
+                document.getElementById('adminLoginBox').classList.add('hidden');
+                document.getElementById('appBox').classList.add('hidden');
+                document.getElementById('loginBox').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                msg.textContent = '';
+                await renderAdminPanel();
+                translatePage();
+            } else {
+                msg.textContent = currentLang === 'fa' ? '❌ رمز مدیریت اشتباه است.' : '❌ Admin password is incorrect.';
+                msg.style.color = '#ef4444';
+            }
+        }
+
+        async function renderAdminPanel() {
+            const container = document.getElementById('adminTableContainer');
+            const users = await loadFromSheet();
+            const usernames = Object.keys(users);
+
+            if (usernames.length === 0) {
+                container.innerHTML = `<p style="color:var(--muted);">${translations[currentLang]['no_users']}</p>`;
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>${translations[currentLang]['username']}</th>
+                            <th>${translations[currentLang]['habits_count']}</th>
+                            <th>${translations[currentLang]['last_activity']}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            usernames.forEach((user, index) => {
+                const habitCount = (users[user].habits || []).length;
+                const lastActivity = users[user].lastActivity || 'نامشخص';
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${user}</td>
+                        <td>${habitCount}</td>
+                        <td>${lastActivity}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+                <p style="color:var(--muted);margin-top:12px;font-size:13px;">${translations[currentLang]['total_users']} ${usernames.length}</p>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ==============================================
+        //  توابع Habit Tracker
+        // ==============================================
+        async function saveHabits() {
+            if (!currentUser) return;
+            await syncWithSheet('update', {
+                username: currentUser,
+                password: 'dummy',
+                habits: habits,
+                lastActivity: new Date().toLocaleString('fa-IR')
+            });
+        }
+
+        async function addHabit() {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+            if (!name) {
+                alert(currentLang === 'fa' ? 'لطفاً نام عادت را وارد کنید.' : 'Please enter habit name.');
+                return;
+            }
+            habits.push({ id: Date.now(), name: name, days: {} });
+            await saveHabits();
+            render();
+            input.value = '';
+        }
+
+        async function deleteHabit(id) {
+            habits = habits.filter(h => h.id !== id);
+            await saveHabits();
+            render();
+        }
+
+        async function toggleDay(habitId, date) {
+            const habit = habits.find(h => h.id === habitId);
+            if (!habit) return;
+            if (habit.days[date]) {
+                delete habit.days[date];
+            } else {
+                habit.days[date] = true;
+            }
+            await saveHabits();
+            render();
+        }
+
+        function getWeekDates() {
+            const today = new Date();
+            const week = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                week.push(d.toISOString().split('T')[0]);
+            }
+            return week;
+        }
+
+        function getHabitStats(habit) {
+            const week = getWeekDates();
+            let done = 0;
+            week.forEach(date => {
+                if (habit.days[date]) done++;
+            });
+            return { done, total: week.length, percent: Math.round((done / week.length) * 100) };
+        }
+
+        // ==============================================
+        //  رندر و نمودار
+        // ==============================================
+        function render() {
+            const list = document.getElementById('habitList');
+            list.innerHTML = '';
+
+            if (habits.length === 0) {
+                list.innerHTML = `<p style="color:var(--muted);text-align:center;">${translations[currentLang]['no_habits']}</p>`;
+                updateChart();
+                return;
+            }
+
+            const week = getWeekDates();
+
+            habits.forEach(habit => {
+                const stats = getHabitStats(habit);
+                const div = document.createElement('div');
+                div.className = 'habit-item';
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'habit-info';
+                infoDiv.innerHTML = `
+                    <span class="habit-name">${habit.name}</span>
+                    <span class="habit-stats">✅ ${stats.done}/${stats.total} (${stats.percent}%)</span>
+                `;
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'habit-actions';
+
+                week.forEach(date => {
+                    const label = document.createElement('label');
+                    label.style.display = 'inline-flex';
+                    label.style.alignItems = 'center';
+                    label.style.gap = '2px';
+                    label.style.fontSize = '12px';
+                    label.style.color = 'var(--muted)';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.className = 'habit-check';
+                    cb.checked = !!habit.days[date];
+                    cb.addEventListener('change', () => toggleDay(habit.id, date));
+                    const dayName = new Date(date + 'T00:00:00').toLocaleDateString(currentLang === 'fa' ? 'fa-IR' : 'en-US', { weekday: 'short' });
+                    label.appendChild(cb);
+                    label.appendChild(document.createTextNode(dayName));
+                    actionsDiv.appendChild(label);
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger';
+                deleteBtn.textContent = '✕';
+                deleteBtn.style.padding = '4px 10px';
+                deleteBtn.style.fontSize = '13px';
+                deleteBtn.onclick = () => deleteHabit(habit.id);
+                actionsDiv.appendChild(deleteBtn);
+
+                div.appendChild(infoDiv);
+                div.appendChild(actionsDiv);
+                list.appendChild(div);
+            });
+
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            const week = getWeekDates();
+            const labels = week.map(d => new Date(d + 'T00:00:00').toLocaleDateString(currentLang === 'fa' ? 'fa-IR' : 'en-US', { weekday: 'short' }));
+
+            const datasets = habits.map(habit => {
+                const data = week.map(date => habit.days[date] ? 1 : 0);
+                const colors = ['#6366f1', '#22d3ee', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#f472b6'];
+                const color = colors[habits.indexOf(habit) % colors.length];
+                return {
+                    label: habit.name,
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: color + '44',
+                    borderWidth: 2,
+                    tension: 0.2,
+                    pointRadius: 4,
+                };
+            });
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: 'var(--text)' } }
+                    },
+                    scales: {
+                        y: { min: 0, max: 1.2, ticks: { stepSize: 1, color: 'var(--muted)' }, grid: { color: 'rgba(128,128,128,0.1)' } },
+                        x: { ticks: { color: 'var(--muted)' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ==============================================
+        //  تم و زبان
+        // ==============================================
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const btns = document.querySelectorAll('.btn-outline');
+            btns.forEach(b => {
+                if (b.textContent.includes('تم') || b.textContent.includes('Theme')) {
+                    b.textContent = document.body.classList.contains('dark') ? '☀️ ' + (currentLang === 'fa' ? 'تم' : 'Theme') : '🌙 ' + (currentLang === 'fa' ? 'تم' : 'Theme');
+                }
+            });
+            setTimeout(updateChart, 50);
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'fa' ? 'en' : 'fa';
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'fa' ? 'rtl' : 'ltr';
+            document.querySelector('.lang-toggle').textContent = currentLang === 'fa' ? '🇬🇧 EN' : '🇮🇷 FA';
+            translatePage();
+            render();
+            if (isAdmin) renderAdminPanel();
+        }
+
+        function translatePage() {
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (translations[currentLang] && translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            const themeBtns = document.querySelectorAll('.btn-outline');
+            themeBtns.forEach(b => {
+                if (b.textContent.includes('تم') || b.textContent.includes('Theme')) {
+                    b.textContent = document.body.classList.contains('dark') ? '☀️ ' + (currentLang === 'fa' ? 'تم' : 'Theme') : '🌙 ' + (currentLang === 'fa' ? 'تم' : 'Theme');
+                }
+            });
+        }
+
+        // ==============================================
+        //  شروع
+        // ==============================================
+        render();
+        translatePage();
+    </script>
+
+</body>
+</html>
